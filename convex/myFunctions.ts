@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { v } from "convex/values";
 import { query, mutation, action } from "./_generated/server";
 import { api } from "./_generated/api";
@@ -7,7 +8,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 // See https://docs.convex.dev/functions for more.
 
 // You can read data from the database via a query:
-export const listNumbers = query({
+/*export const listNumbers = query({
   // Validators for arguments.
   args: {
     count: v.number(),
@@ -29,7 +30,7 @@ export const listNumbers = query({
       numbers: numbers.reverse().map((number) => number.value),
     };
   },
-});
+});*/
 
 export const getUser = query({
   handler: async (ctx) => {
@@ -40,7 +41,7 @@ export const getUser = query({
 });
 
 // You can write data to the database via a mutation:
-export const addNumber = mutation({
+/*export const addNumber = mutation({
   // Validators for arguments.
   args: {
     value: v.number(),
@@ -86,4 +87,4 @@ export const myAction = action({
       value: args.first,
     });
   },
-});
+});*/

@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import Link from "next/link";
@@ -55,13 +56,10 @@ function SignOutButton() {
 }
 
 function Content() {
-  const { viewer, numbers } =
-    useQuery(api.myFunctions.listNumbers, {
-      count: 10,
-    }) ?? {};
-  const addNumber = useMutation(api.myFunctions.addNumber);
+  const viewer = useQuery(api.myFunctions.getUser);
+  //const addNumber = useMutation(api.myFunctions.addNumber);
 
-  if (viewer === undefined || numbers === undefined) {
+  if (viewer === undefined || viewer === null) {
     return (
       <div className="mx-auto">
         <p>loading... (consider a loading skeleton)</p>
@@ -71,7 +69,7 @@ function Content() {
 
   return (
     <div className="flex flex-col gap-8 max-w-lg mx-auto">
-      <p>Welcome {viewer ?? "Anonymous"}!</p>
+      <p>Welcome {viewer?.email ?? "Anonymous"}!</p>
       <p>
         Click the button below and open this page in another window - this data
         is persisted in the Convex cloud database!
@@ -80,7 +78,7 @@ function Content() {
         <button
           className="bg-foreground text-background text-sm px-4 py-2 rounded-md"
           onClick={() => {
-            void addNumber({ value: Math.floor(Math.random() * 10) });
+            //void addNumber({ value: Math.floor(Math.random() * 10) });
           }}
         >
           Add a random number
@@ -88,9 +86,9 @@ function Content() {
       </p>
       <p>
         Numbers:{" "}
-        {numbers?.length === 0
+        {/*{numbers?.length === 0
           ? "Click the button!"
-          : (numbers?.join(", ") ?? "...")}
+          : (numbers?.join(", ") ?? "...")}*/}
       </p>
       <p>
         Edit{" "}

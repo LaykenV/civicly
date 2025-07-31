@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface BillFile {
   mimeType: string;
@@ -31,6 +32,21 @@ export default function TestBillQuery() {
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const router = useRouter();
+
+  const copyToClipboard = async () => {
+    if (!apiResponse) return;
+    
+    try {
+      const responseText = JSON.stringify(apiResponse, null, 2);
+      await navigator.clipboard.writeText(responseText);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchBillData = async () => {
@@ -38,7 +54,7 @@ export default function TestBillQuery() {
         setLoading(true);
         setError(null);
 
-        const endpoint = 'BILLS/119/1/hconres/BILLS-119hconres1eh.xml';
+        const endpoint = 'BILLS/119/1/hconres/BILLS-119hconres10ih.xml';
 
         // Fetch bills from the 119th Congress (current/recent)
         const response = await fetch(`/api/govinfo-proxy?endpoint=${endpoint}`, {
@@ -69,9 +85,22 @@ export default function TestBillQuery() {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            GovInfo Bill Data Test
-          </h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
+              GovInfo Bill Data Test
+            </h1>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Return Home</span>
+              </button>
+            </div>
+          </div>
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             <span className="ml-4 text-gray-600">Loading bill data...</span>
@@ -85,9 +114,22 @@ export default function TestBillQuery() {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            GovInfo Bill Data Test
-          </h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
+              GovInfo Bill Data Test
+            </h1>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Return Home</span>
+              </button>
+            </div>
+          </div>
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-red-800 mb-2">Error</h2>
             <p className="text-red-700">{error}</p>
@@ -107,9 +149,22 @@ export default function TestBillQuery() {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            GovInfo Bill Data Test
-          </h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
+              GovInfo Bill Data Test
+            </h1>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Return Home</span>
+              </button>
+            </div>
+          </div>
           <div className="text-center py-12">
             <p className="text-gray-600">No data received</p>
           </div>
@@ -123,9 +178,41 @@ export default function TestBillQuery() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          GovInfo Bill Data Test
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            GovInfo Bill Data Test
+          </h1>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => router.push('/')}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Return Home</span>
+            </button>
+            {apiResponse && (
+              <button
+                onClick={copyToClipboard}
+                className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
+                  copySuccess 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {copySuccess ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  )}
+                </svg>
+                <span>{copySuccess ? 'Copied!' : 'Copy Full Response'}</span>
+              </button>
+            )}
+          </div>
+        </div>
         
         <div className="space-y-6">
           {/* API Response Info */}
