@@ -30,7 +30,7 @@ export default function TestBillQuery() {
         setLoading(true);
         setError(null);
 
-        const endpoint = '/json/BILLS/119/1/hconres/';
+        const endpoint = 'BILLS/119/1/hr/BILLS-119hr1008ih.xml';
 
         // Fetch bills from the 119th Congress (current/recent)
         const response = await fetch(`/api/govinfo-proxy?endpoint=${endpoint}`, {
