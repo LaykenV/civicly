@@ -2,31 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface BillFile {
-  mimeType: string;
-  size: number;
-  formattedLastModifiedTime: string;
-  name: string;
-  folder: boolean;
-  displayLabel: string;
-  formattedSize: string;
-  link: string;
-  justFileName: string;
-  fileExtension: string;
-}
-
-interface BillData {
-  files?: BillFile[];
-  [key: string]: unknown; // Allow additional properties
-}
-
-interface ApiResponse {
-  data: BillData | string;
-  responseType: 'json' | 'xml' | 'text';
-  contentType: string;
-  url: string;
-}
+import { BillData, ApiResponse } from '../../types';
 
 export default function TestBillQuery() {
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
@@ -54,7 +30,7 @@ export default function TestBillQuery() {
         setLoading(true);
         setError(null);
 
-        const endpoint = 'BILLS/119/1/hconres/BILLS-119hconres10ih.xml';
+        const endpoint = '/json/BILLS/119/1/hconres/';
 
         // Fetch bills from the 119th Congress (current/recent)
         const response = await fetch(`/api/govinfo-proxy?endpoint=${endpoint}`, {

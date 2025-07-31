@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('GovInfo API response:', response);
     
     // Check content type to determine how to parse the response
     const contentType = response.headers.get('content-type') || '';
@@ -49,6 +48,7 @@ export async function GET(request: NextRequest) {
       data = await response.json();
       responseType = 'json';
       console.log('Successfully parsed JSON data with', Object.keys(data).join(', '), 'properties');
+      console.log(data);
     } else if (contentType.includes('xml')) {
       data = await response.text();
       responseType = 'xml';
