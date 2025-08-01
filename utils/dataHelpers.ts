@@ -1,84 +1,62 @@
-// Helper function to recursively extract text from the complex body structure
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-/*export const extractTextRecursively = (node: any): string => {
-    if (typeof node === 'string') {
-      return node + " ";
-    }
-    if (node === null || typeof node !== 'object') {
-      return "";
-    }
-  
-    let text = "";
-    if (node["#text"]) {
-      text += node["#text"] + " ";
-    }
-  
-    for (const key in node) {
-      if (key !== "#text" && key !== "@_display-inline") { // Ignore metadata/attributes
-        if (Array.isArray(node[key])) {
-          for (const item of node[key]) {
-            text += extractTextRecursively(item);
-          }
-        } else if (typeof node[key] === 'object') {
-          text += extractTextRecursively(node[key]);
-        }
-      }
-    }
-    return text;
-  };*/
 
   /**
- * Recursively extracts meaningful text from a parsed XML node representing a bill.
- * This function is specifically designed to traverse the legislative XML structure,
- * concatenating text from meaningful tags while ignoring structural/metadata tags
- * like <enum> and <header>.
+ * Recursively and universally extracts meaningful text from any node parsed by fast-xml-parser.
+ * This function traverses the entire object tree, concatenating text from all nodes
+ * while ignoring known structural/metadata tags (like <enum>, <header>) and attributes.
  *
- * @param node The current node from the fast-xml-parser output.
+ * @param node The current node from the fast-xml-parser output. Can be an object, array, string, or number.
  * @returns A string of concatenated, cleaned text.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const extractBillText = (node: any): string => {
-    if (!node) {
+  // Base case: Node is null or undefined
+  if (node === null || node === undefined) {
+    return "";
+  }
+
+  // Base case: Node is a primitive value (string, number, boolean).
+  // This handles simple text nodes and values from `parseTagValue: true`.
+  if (typeof node !== 'object') {
+    const text = String(node).trim();
+    // Skip empty strings and meaningless single characters
+    if (text.length === 0 || /^[.,;:\-_\s]*$/.test(text)) {
       return "";
     }
+    return text + " ";
+  }
+
+  // Recursive case: Node is an array of sub-nodes.
+  // Process each item in the array and join the results.
+  if (Array.isArray(node)) {
+    // Join with an empty string, as each recursive call adds its own space.
+    return node.map(item => extractBillText(item)).join('');
+  }
+
+  // Recursive case: Node is an object.
+  // This is the core logic for traversing the parsed XML structure.
+  let fullText = "";
   
-    // If the node is just a string, return it.
-    if (typeof node === 'string') {
-      return node + " ";
+  // An expanded blacklist of keys that represent metadata, not textual content.
+  const structuralTagsToIgnore = [
+    'enum', 'header', 'label', 'toc', 'pagebreak', 
+    'continuation-text', 'footnote-ref', 'xref',
+    'target', 'graphic', 'table-column-spec'
+  ];
+
+  // Iterate over all keys in the object in their natural order.
+  for (const key in node) {
+    // Ignore attributes, which you've configured to start with '@_'.
+    if (key.startsWith('@_')) {
+      continue;
     }
-  
-    let fullText = "";
-  
-    // The direct text content of a tag is usually in "#text".
-    if (node["#text"]) {
-      fullText += node["#text"] + " ";
+    // Ignore specific structural tags from our blacklist.
+    if (structuralTagsToIgnore.includes(key)) {
+      continue;
     }
+    
+    // Recurse for all other keys (including '#text', 'section', 'quoted-block', etc.)
+    fullText += extractBillText(node[key]);
+  }
   
-    // An ordered list of tags that contain the main legislative text.
-    // We process them in this order to maintain a logical flow.
-    const contentTags = [
-      "text",
-      "section",
-      "subsection",
-      "paragraph",
-      "subparagraph",
-      "clause",
-      "subclause",
-      "item",
-      "quoted-block",
-      "quote",
-      "continuation-text",
-    ];
-  
-    for (const tagName of contentTags) {
-      if (node[tagName]) {
-        // The tag's content could be a single object or an array of objects.
-        const children = Array.isArray(node[tagName]) ? node[tagName] : [node[tagName]];
-        for (const child of children) {
-          fullText += extractBillText(child); // Recurse into the child
-        }
-      }
-    }
-  
-    return fullText;
-  };
+  return fullText;
+};
