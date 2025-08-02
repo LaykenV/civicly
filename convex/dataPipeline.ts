@@ -40,8 +40,9 @@ export const discoverNewBillFiles = action({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const billTypes = ["hconres", "hres", "hr", "hjres", "sconres", "sres", "s", "sjres"];
+    //const billTypes = ["hconres", "hres", "hr", "hjres", "sconres", "sres", "s", "sjres"];
     //const billTypes = ["hr"];
+    const billTypes = ["hr", "s", "hjres", "sjres"];
     // fetch lastcheckedtimestamp from convex db
     const lastCheckedTimestamp = await ctx.runQuery(internal.dataPipeline.getLastCheckedTimestamp);
     const lastCheckedTimestampValue = lastCheckedTimestamp?.timestamp ?? 0;
@@ -71,10 +72,9 @@ export const discoverNewBillFiles = action({
 
       if (newXmlFiles.length > 0) {
         console.log(`Found ${newXmlFiles.length} new XML files for ${billType}`);
-        /*for (const file of newXmlFiles) {
+        for (const file of newXmlFiles) {
           processingPromises.push(ctx.runAction(internal.dataPipeline.ingestAndEnrichBillFile, { xmlUrl: file.link }));
-        }*/
-       processingPromises.push(ctx.runAction(internal.dataPipeline.ingestAndEnrichBillFile, { xmlUrl: newXmlFiles[0].link }));
+        }
       } else {
         console.log(`No new XML files found for ${billType}`);
       }
@@ -94,19 +94,108 @@ export const discoverNewBillFiles = action({
   },
 });
 
-// Helper function to check if XML file has already been processed
-export const checkIfProcessed = internalQuery({
+// Helper function to extract bill information from XML URL
+export const parseBillInfoFromUrl = (xmlUrl: string) => {
+  const urlMatch = xmlUrl.match(/BILLS-(\d{3})([a-zA-Z]+)(\d+)([a-zA-Z]{2,3})\.xml$/);
+  if (!urlMatch) {
+    throw new Error(`Could not parse bill info from URL: ${xmlUrl}`);
+  }
+  
+  const [, congress, billType, billNumber, versionCode] = urlMatch;
+  return {
+    congress: parseInt(congress),
+    billType,
+    billNumber,
+    versionCode
+  };
+};
+
+// Helper function to determine version priority (higher number = more important)
+export const getVersionPriority = (versionCode: string): number => {
+  const versionPriority = ["ih", "pcs", "rh", "eh", "enr"]; // Introduced -> Enrolled
+  const index = versionPriority.indexOf(versionCode);
+  return index === -1 ? -1 : index; // Unknown versions get lowest priority
+};
+
+// Enhanced function to check if we should process this bill version
+export const shouldProcessBillVersion = internalQuery({
   args: {
     xmlUrl: v.string(),
   },
-  returns: v.boolean(),
+  returns: v.object({
+    shouldProcess: v.boolean(),
+    reason: v.string(),
+    existingBillId: v.optional(v.id("bills")),
+  }),
   handler: async (ctx, args) => {
-    const existingVersion = await ctx.db
-      .query("billVersions")
-      .filter((q) => q.eq(q.field("xmlUrl"), args.xmlUrl))
-      .first();
-    
-    return !!existingVersion;
+    try {
+      // Check if this exact XML file was already processed
+      const existingVersion = await ctx.db
+        .query("billVersions")
+        .filter((q) => q.eq(q.field("xmlUrl"), args.xmlUrl))
+        .first();
+      
+      if (existingVersion) {
+        return {
+          shouldProcess: false,
+          reason: "Exact file already processed",
+          existingBillId: existingVersion.billId,
+        };
+      }
+
+      // Parse bill info from URL
+      const billInfo = parseBillInfoFromUrl(args.xmlUrl);
+      
+      // Check if we have this bill already
+      const existingBill = await ctx.db
+        .query("bills")
+        .withIndex("by_identifier", (q) => 
+          q.eq("congress", billInfo.congress)
+           .eq("billType", billInfo.billType)
+           .eq("billNumber", billInfo.billNumber)
+        )
+        .first();
+
+      if (!existingBill) {
+        return {
+          shouldProcess: true,
+          reason: "New bill",
+        };
+      }
+
+      // If we have the bill, check if this version is better
+      const currentVersionPriority = existingBill.latestVersionCode 
+        ? getVersionPriority(existingBill.latestVersionCode)
+        : -1;
+      const newVersionPriority = getVersionPriority(billInfo.versionCode);
+
+      if (newVersionPriority > currentVersionPriority) {
+        return {
+          shouldProcess: true,
+          reason: `Better version: ${billInfo.versionCode} > ${existingBill.latestVersionCode}`,
+          existingBillId: existingBill._id,
+        };
+      } else if (newVersionPriority === currentVersionPriority) {
+        return {
+          shouldProcess: false,
+          reason: `Same version priority: ${billInfo.versionCode} = ${existingBill.latestVersionCode}`,
+          existingBillId: existingBill._id,
+        };
+      } else {
+        return {
+          shouldProcess: false,
+          reason: `Lower version priority: ${billInfo.versionCode} < ${existingBill.latestVersionCode}`,
+          existingBillId: existingBill._id,
+        };
+      }
+    } catch (error) {
+      console.error(`Error checking if should process ${args.xmlUrl}:`, error);
+      // If we can't determine, err on the side of processing
+      return {
+        shouldProcess: true,
+        reason: `Error determining priority: ${error}`,
+      };
+    }
   },
 });
 
@@ -117,17 +206,17 @@ export const ingestAndEnrichBillFile = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
-      // Check if we've already processed this XML file
-      const alreadyProcessed = await ctx.runQuery(internal.dataPipeline.checkIfProcessed, { 
+      // Use smart processing to check if we should process this file
+      const processDecision = await ctx.runQuery(internal.dataPipeline.shouldProcessBillVersion, { 
         xmlUrl: args.xmlUrl 
       });
       
-      if (alreadyProcessed) {
-        console.log(`Skipping already processed file: ${args.xmlUrl}`);
+      if (!processDecision.shouldProcess) {
+        console.log(`Skipping ${args.xmlUrl}: ${processDecision.reason}`);
         return null;
       }
 
-      console.log(`Processing: ${args.xmlUrl}`);
+      console.log(`Processing: ${args.xmlUrl} (${processDecision.reason})`);
       const xmlUrl = args.xmlUrl;
       const response = await fetch(xmlUrl);
       if (!response.ok) {
