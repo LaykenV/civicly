@@ -2,7 +2,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
-// import { vThreadId } from "@convex-dev/agent"; // TODO: Install @convex-dev/agent package
 
 export default defineSchema({
   ...authTables,
@@ -17,14 +16,18 @@ export default defineSchema({
     billNumber: v.string(),        // e.g., "10"
     // Core, relatively static info
     title: v.string(),
+    cleanedShortTitle: v.optional(v.string()), // Short title from bill text
     sponsorId: v.optional(v.id("politicians")),
+    committees: v.optional(v.array(v.string())), // Committees handling this bill
     // Fields that reflect the LATEST ingested version
     latestVersionCode: v.optional(v.string()), // "ih", "rh", "enr"
+    latestActionDate: v.optional(v.string()), // Most recent action date
     status: v.string(), // "Introduced", "Passed House", "Enrolled"
     tagline: v.optional(v.string()), // AI-generated
     summary: v.optional(v.string()), // AI-generated summary of the latest version
     changeAnalysis: v.optional(v.any()), // For "Current vs. Proposed"
     impactAreas: v.optional(v.array(v.string())), // ["Finance", "Healthcare"]
+    ragId: v.optional(v.string()), // RAG entry ID for tracking/debugging
   })
     // Unique identifier for a bill concept
     .index("by_identifier", ["congress", "billType", "billNumber"])
@@ -40,7 +43,8 @@ export default defineSchema({
     fullText: v.string(),          // The full text of THIS version
     xmlUrl: v.string(),            // The source URL from govinfo.gov
   })
-    .index("by_billId_and_version", ["billId", "versionCode"]),
+    .index("by_billId_and_version", ["billId", "versionCode"])
+    .index("by_xmlUrl", ["xmlUrl"]),
 
   politicians: defineTable({
     name: v.string(),
@@ -79,8 +83,7 @@ export default defineSchema({
   chats: defineTable({
     userId: v.id("users"),
     billId: v.optional(v.id("bills")),
-    // threadId: vThreadId, // TODO: Uncomment when @convex-dev/agent is installed
-    threadId: v.string(), // Temporary string type until agent package is installed
+    threadId: v.string(), // String type for thread ID (compatible with agent)
   })
     .index("by_user_bill", ["userId", "billId"])
     .index("by_threadId", ["threadId"]),

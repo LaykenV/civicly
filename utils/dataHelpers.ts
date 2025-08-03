@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { BillUrlInfo, ExtractedBillData, BillSponsor } from "../types";
 
 /**
  * Recursively and universally extracts meaningful text from any node parsed by fast-xml-parser.
@@ -67,7 +68,7 @@ export const extractBillText = (node: any): string => {
  * @param xmlUrl - The XML URL to parse
  * @returns Object containing congress, billType, billNumber, and versionCode
  */
-export const parseBillInfoFromUrl = (xmlUrl: string) => {
+export const parseBillInfoFromUrl = (xmlUrl: string): BillUrlInfo => {
   const urlMatch = xmlUrl.match(/BILLS-(\d{3})([a-zA-Z]+)(\d+)([a-zA-Z]{2,3})\.xml$/);
   if (!urlMatch) {
     throw new Error(`Could not parse bill info from URL: ${xmlUrl}`);
@@ -133,12 +134,12 @@ export const constructBillType = (chamber: string, resolutionType?: string): str
  * @returns Sponsor object with name and nameId
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const extractSponsorInfo = (billData: any) => {
+export const extractSponsorInfo = (billData: any): { sponsor: BillSponsor; introAction: any } => {
   const actions = Array.isArray(billData.form.action) ? billData.form.action : [billData.form.action].filter(Boolean);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const introAction = actions.find((a: any) => a?.["action-desc"]?.sponsor);
   
-  let sponsor = { name: "N/A", nameId: undefined };
+  let sponsor: BillSponsor = { name: "N/A", nameId: undefined };
   if (introAction?.["action-desc"]?.sponsor) {
     const sponsorNode = introAction["action-desc"].sponsor;
     sponsor = {
@@ -156,9 +157,9 @@ export const extractSponsorInfo = (billData: any) => {
  * @returns Array of cosponsor objects
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const extractCosponsors = (introAction: any) => {
+export const extractCosponsors = (introAction: any): BillSponsor[] => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (introAction?.["action-desc"]?.cosponsor || []).map((node: any) => ({
+  return (introAction?.["action-desc"]?.cosponsor || []).map((node: any): BillSponsor => ({
     name: node["#text"],
     nameId: node["@_name-id"],
   }));
@@ -170,7 +171,7 @@ export const extractCosponsors = (introAction: any) => {
  * @returns Array of committee names
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const extractCommittees = (introAction: any) => {
+export const extractCommittees = (introAction: any): string[] => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (introAction?.["action-desc"]?.["committee-name"] || []).map((node: any) => node["#text"]);
 };
@@ -198,7 +199,7 @@ export const extractAndCleanShortTitle = (fullText: string, existingShortTitle?:
  * @param xmlUrl - The source URL for reference
  * @returns Structured bill data object
  */
-export const parseBillXMLData = (xmlData: string, xmlUrl: string) => {
+export const parseBillXMLData = (xmlData: string, xmlUrl: string): ExtractedBillData => {
   const parser = new XMLParser(getXMLParserConfig());
   const jsonData = parser.parse(xmlData);
   
@@ -262,5 +263,9 @@ export const parseBillXMLData = (xmlData: string, xmlUrl: string) => {
     actionDate,
     xmlUrl,
     fullText,
+    summary: "",
+    ragId: "",
+    tagLine: "",
+    impactAreas: [],
   };
 };

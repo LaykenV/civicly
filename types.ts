@@ -21,4 +21,52 @@ export interface ApiResponse {
   responseType: 'json' | 'xml' | 'text';
   contentType: string;
   url: string;
+}
+
+// Core bill sponsor/cosponsor information
+export interface BillSponsor {
+  name: string;
+  nameId?: string;
+}
+
+// Bill summary and AI-generated content
+export interface BillSummaryData {
+  summary: string;
+  tagLine: string;
+  impactAreas: string[];
+}
+
+// Core extracted bill data structure
+export interface ExtractedBillData {
+  congress: number;
+  billType: string;
+  billNumber: string;
+  versionCode: string;
+  officialTitle: string;
+  cleanedShortTitle?: string;
+  sponsor: BillSponsor;
+  cosponsors: BillSponsor[];
+  committees: string[];
+  actionDate?: string;
+  xmlUrl: string;
+  fullText: string;
+  summary: string;
+  ragId: string;
+  tagLine: string;
+  impactAreas: string[];
+}
+
+// Parsed bill info from URL
+export interface BillUrlInfo {
+  congress: number;
+  billType: string;
+  billNumber: string;
+  versionCode: string;
+}
+
+// Processing decision for bill versions
+export interface ProcessDecision {
+  shouldProcess: boolean;
+  reason: string;
+  existingBillId?: string; // This will be Id<"bills"> in Convex context
 } 

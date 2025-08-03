@@ -1,9 +1,41 @@
 import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
-//import { Id } from "./_generated/dataModel";
-import { BillData } from "../types";
+import { Id } from "./_generated/dataModel";
+import { BillData, ExtractedBillData } from "../types";
 import { parseBillInfoFromUrl, getVersionPriority, parseBillXMLData } from "../utils/dataHelpers";
+import { billAnalysisAgent, rag } from "./agent";
+
+// Convex validators for our types
+export const billSponsorValidator = v.object({
+  name: v.string(),
+  nameId: v.optional(v.string()),
+});
+
+export const extractedBillDataValidator = v.object({
+  congress: v.number(),
+  billType: v.string(),
+  billNumber: v.string(),
+  versionCode: v.string(),
+  officialTitle: v.string(),
+  cleanedShortTitle: v.optional(v.string()),
+  sponsor: billSponsorValidator,
+  cosponsors: v.array(billSponsorValidator),
+  committees: v.array(v.string()),
+  actionDate: v.optional(v.string()),
+  xmlUrl: v.string(),
+  fullText: v.string(),
+  summary: v.string(),
+  ragId: v.string(),
+  tagLine: v.string(),
+  impactAreas: v.array(v.string()),
+});
+
+export const billSummaryDataValidator = v.object({
+  summary: v.string(),
+  tagLine: v.string(),
+  impactAreas: v.array(v.string()),
+});
 
 export const getLastCheckedTimestamp = internalQuery({
   args: {},
@@ -73,7 +105,7 @@ export const discoverNewBillFiles = action({
         const timeB = new Date(b.formattedLastModifiedTime).getTime();
         return timeB - timeA;
       })
-      .slice(0, 10); // Take only the 10 latest;
+      .slice(0, 1); // Take only the 1 latest for testing
 
       if (newXmlFiles.length > 0) {
         console.log(`Found ${newXmlFiles.length} new XML files for ${billType}`);
@@ -95,6 +127,65 @@ export const discoverNewBillFiles = action({
     // update the last checked timestamp
     await ctx.runMutation(internal.dataPipeline.updateLastCheckedTimestamp, { timestamp: Date.now() });
     console.log("Finished processing new XML files");
+    return null;
+  },
+});
+
+// Internal wrapper for cron jobs (cron jobs require internal functions)
+export const discoverNewBillFilesCron = internalAction({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    // Use the same logic as the public action
+    const billTypes = ["hr", "s", "hjres", "sjres"];
+    const lastCheckedTimestamp = await ctx.runQuery(internal.dataPipeline.getLastCheckedTimestamp);
+    const lastCheckedTimestampValue = lastCheckedTimestamp?.timestamp ?? 0;
+    console.log("Cron job - Last checked timestamp:", lastCheckedTimestampValue);
+
+    const processingPromises = [];
+
+    for (const billType of billTypes) {
+      const govInfoUrl = `https://www.govinfo.gov/bulkdata/json/BILLS/119/1/${billType}/`;
+      const response = await fetch(govInfoUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to fetch ${govInfoUrl}: ${response.statusText}`);
+        continue;
+      }
+
+      const data: BillData = await response.json();
+      const newXmlFiles = (data.files ?? []).filter(file => file.link.endsWith('.xml')).filter(file => {
+        const fileLastModifiedTime = new Date(file.formattedLastModifiedTime);
+        return fileLastModifiedTime.getTime() > lastCheckedTimestampValue;
+      }).sort((a, b) => {
+        const timeA = new Date(a.formattedLastModifiedTime).getTime();
+        const timeB = new Date(b.formattedLastModifiedTime).getTime();
+        return timeB - timeA;
+      })
+      .slice(0, 1); // Process more files in cron jobs since they run automatically
+
+      if (newXmlFiles.length > 0) {
+        console.log(`Cron job - Found ${newXmlFiles.length} new XML files for ${billType}`);
+        for (const file of newXmlFiles) {
+          processingPromises.push(ctx.runAction(internal.dataPipeline.ingestAndEnrichBillFile, { xmlUrl: file.link }));
+        }
+      } else {
+        console.log(`Cron job - No new XML files found for ${billType}`);
+      }
+    }
+
+    await Promise.all(processingPromises);
+    
+    const totalProcessed = processingPromises.length;
+    console.log(`Cron job - Processing completed: ${totalProcessed} files processed`);
+    
+    await ctx.runMutation(internal.dataPipeline.updateLastCheckedTimestamp, { timestamp: Date.now() });
+    console.log("Cron job - Finished processing new XML files");
     return null;
   },
 });
@@ -209,12 +300,37 @@ export const ingestAndEnrichBillFile = internalAction({
       const xmlData = await response.text();
     
       // Parse XML data using helper function
-      const extractedData = parseBillXMLData(xmlData, args.xmlUrl);
+      const extractedData: ExtractedBillData = parseBillXMLData(xmlData, args.xmlUrl);
+
+      // Generate AI summary and enrich data
+      const summaryData = await ctx.runAction(internal.dataPipeline.getBillSummary, { 
+        extractedData: {
+          fullText: extractedData.fullText,
+          billType: extractedData.billType,
+          billNumber: extractedData.billNumber,
+          versionCode: extractedData.versionCode,
+          officialTitle: extractedData.officialTitle,
+          cleanedShortTitle: extractedData.cleanedShortTitle,
+          sponsor: extractedData.sponsor,
+          cosponsors: extractedData.cosponsors,
+          committees: extractedData.committees,
+          actionDate: extractedData.actionDate,
+        }
+      });
+
+      // Update extracted data with AI-generated content
+      extractedData.summary = summaryData.summary;
+      extractedData.tagLine = summaryData.tagLine;
+      extractedData.impactAreas = summaryData.impactAreas;
+
+      // Vectorize the enriched data
+      const ragId = await ctx.runAction(internal.dataPipeline.vectorizeBillData, { extractedData });
+      extractedData.ragId = ragId;
 
       console.log("extractedData", JSON.stringify(extractedData, null, 2));
 
       // Store the extracted data in the database
-      //await ctx.runMutation(internal.dataPipeline.storeBillData, extractedData);
+      await ctx.runMutation(internal.dataPipeline.storeBillData, extractedData);
 
       return null;
     } catch (error) {
@@ -224,8 +340,149 @@ export const ingestAndEnrichBillFile = internalAction({
   },
 });
 
+export const getBillSummary = internalAction({
+  args: {
+    extractedData: v.object({
+      fullText: v.string(),
+      billType: v.string(),
+      billNumber: v.string(),
+      versionCode: v.string(),
+      officialTitle: v.string(),
+      cleanedShortTitle: v.optional(v.string()),
+      sponsor: billSponsorValidator,
+      cosponsors: v.array(billSponsorValidator),
+      committees: v.array(v.string()),
+      actionDate: v.optional(v.string()),
+    }),
+  },
+  returns: billSummaryDataValidator, 
+  handler: async (ctx, args) => {
+    const { extractedData } = args;
+    
+    try {
+      // Create a detailed prompt for bill analysis
+      const prompt = `Analyze this federal bill and provide:
+
+1. A comprehensive summary (2-3 paragraphs) explaining what the bill does, its key provisions, and potential implications
+2. A compelling one-sentence tagline that captures the essence of the bill  
+3. A list of impact areas from this predefined list: ["Agriculture", "Armed Forces", "Civil Rights", "Commerce", "Crime", "Economics", "Education", "Energy", "Environment", "Finance", "Government Operations", "Health", "Housing", "Immigration", "International Affairs", "Labor", "Law", "Native Americans", "Public Lands", "Science", "Social Issues", "Social Security", "Sports", "Taxation", "Technology", "Transportation", "Water Resources"]
+
+Bill Details:
+- Type: ${extractedData.billType.toUpperCase()}
+- Number: ${extractedData.billNumber}
+- Version: ${extractedData.versionCode}
+- Title: ${extractedData.officialTitle}
+- Short Title: ${extractedData.cleanedShortTitle || "None"}
+- Sponsor: ${extractedData.sponsor.name}
+- Committees: ${extractedData.committees.join(", ") || "None"}
+
+Full Bill Text:
+${extractedData.fullText.slice(0, 8000)} ${extractedData.fullText.length > 8000 ? '...' : ''}
+
+Please respond with ONLY a valid JSON object in this exact format:
+{
+  "summary": "Your comprehensive summary here",
+  "tagLine": "Your one-sentence tagline here",
+  "impactAreas": ["ImpactArea1", "ImpactArea2", "ImpactArea3"]
+}`;
+
+      // Generate text using the agent
+      const { thread } = await billAnalysisAgent.createThread(ctx);
+      const result = await thread.generateText({ prompt });
+      
+      // Parse the JSON response
+      let parsedResult;
+      try {
+        parsedResult = JSON.parse(result.text);
+      } catch {
+        console.error("Failed to parse AI response as JSON:", result.text);
+        // Fallback response
+        parsedResult = {
+          summary: `This ${extractedData.billType.toUpperCase()} ${extractedData.billNumber} (${extractedData.officialTitle}) introduces new federal legislation. The bill contains multiple provisions and would impact various aspects of federal policy if enacted.`,
+          tagLine: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber} introduces new federal legislation with multiple policy provisions.`,
+          impactAreas: ["Government Operations", "Law"]
+        };
+      }
+
+      // Validate the response structure
+      if (!parsedResult.summary || !parsedResult.tagLine || !Array.isArray(parsedResult.impactAreas)) {
+        throw new Error("Invalid AI response structure");
+      }
+
+      return {
+        summary: parsedResult.summary,
+        tagLine: parsedResult.tagLine,
+        impactAreas: parsedResult.impactAreas,
+      };
+    } catch (error) {
+      console.error("Error generating bill summary:", error);
+      // Return fallback data
+      return {
+        summary: `This ${extractedData.billType.toUpperCase()} ${extractedData.billNumber} (${extractedData.officialTitle}) introduces new federal legislation. The bill contains multiple provisions and would impact various aspects of federal policy if enacted.`,
+        tagLine: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber} introduces new federal legislation with multiple policy provisions.`,
+        impactAreas: ["Government Operations", "Law"],
+      };
+    }
+  },
+});
+
+export const vectorizeBillData = internalAction({
+  args: {
+    extractedData: extractedBillDataValidator,
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    const { extractedData } = args;
+    
+    try {
+      // Create a unique namespace for this bill
+      const billIdentifier = `${extractedData.congress}-${extractedData.billType}-${extractedData.billNumber}`;
+      
+      // Prepare the text content for vectorization
+      const contentToVectorize = `
+Title: ${extractedData.officialTitle}
+${extractedData.cleanedShortTitle ? `Short Title: ${extractedData.cleanedShortTitle}` : ''}
+Type: ${extractedData.billType.toUpperCase()} ${extractedData.billNumber}
+Congress: ${extractedData.congress}
+Version: ${extractedData.versionCode}
+Sponsor: ${extractedData.sponsor.name}
+Committees: ${extractedData.committees.join(", ")}
+Summary: ${extractedData.summary}
+Tag Line: ${extractedData.tagLine}
+Impact Areas: ${extractedData.impactAreas.join(", ")}
+
+Full Text:
+${extractedData.fullText}
+      `.trim();
+
+      // Add the bill content to RAG for search
+      const { entryId } = await rag.add(ctx, {
+        namespace: "bills", // Global namespace for all bills
+        key: billIdentifier, // Unique key for this bill
+        text: contentToVectorize,
+        // Store metadata for filtering
+        filterValues: [
+          { name: "billType", value: extractedData.billType },
+          { name: "congress", value: extractedData.congress.toString() },
+          { name: "sponsor", value: extractedData.sponsor.name },
+          ...extractedData.impactAreas.map(area => ({ name: "impactArea", value: area })),
+          ...extractedData.committees.map(committee => ({ name: "committee", value: committee })),
+        ],
+      });
+
+      console.log(`Successfully vectorized bill ${billIdentifier} with entry ID: ${entryId}`);
+      
+      return entryId;
+    } catch (error) {
+      console.error("Error vectorizing bill data:", error);
+      // Return a fallback ID
+      return `fallback-${Date.now()}`;
+    }
+  },
+});
+
 // Internal mutation to store bill data in the database
-/*export const storeBillData = internalMutation({
+export const storeBillData = internalMutation({
   args: {
     congress: v.number(),
     billType: v.string(),
@@ -233,18 +490,16 @@ export const ingestAndEnrichBillFile = internalAction({
     versionCode: v.string(),
     officialTitle: v.string(),
     cleanedShortTitle: v.optional(v.string()),
-    sponsor: v.object({
-      name: v.string(),
-      nameId: v.optional(v.string()),
-    }),
-    cosponsors: v.array(v.object({
-      name: v.string(),
-      nameId: v.optional(v.string()),
-    })),
+    sponsor: billSponsorValidator,
+    cosponsors: v.array(billSponsorValidator),
     committees: v.array(v.string()),
     actionDate: v.optional(v.string()),
     xmlUrl: v.string(),
     fullText: v.string(),
+    summary: v.string(),
+    tagLine: v.string(),
+    impactAreas: v.array(v.string()),
+    ragId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -282,9 +537,16 @@ export const ingestAndEnrichBillFile = internalAction({
       // Update existing bill with latest info
       await ctx.db.patch(existingBill._id, {
         title: args.officialTitle,
+        cleanedShortTitle: args.cleanedShortTitle,
         sponsorId,
+        committees: args.committees,
         latestVersionCode: args.versionCode,
+        latestActionDate: args.actionDate,
         status: "Introduced", // You can enhance this based on version codes
+        summary: args.summary,
+        tagline: args.tagLine,
+        impactAreas: args.impactAreas,
+        ragId: args.ragId,
       });
       billId = existingBill._id;
     } else {
@@ -294,9 +556,16 @@ export const ingestAndEnrichBillFile = internalAction({
         billType: args.billType,
         billNumber: args.billNumber,
         title: args.officialTitle,
+        cleanedShortTitle: args.cleanedShortTitle,
         sponsorId,
+        committees: args.committees,
         latestVersionCode: args.versionCode,
+        latestActionDate: args.actionDate,
         status: "Introduced",
+        summary: args.summary,
+        tagline: args.tagLine,
+        impactAreas: args.impactAreas,
+        ragId: args.ragId,
       });
     }
 
@@ -351,4 +620,4 @@ export const upsertPolitician = internalMutation({
       chamber: "House", // TODO: Determine from bill type or other data
     });
   },
-});*/
+});
