@@ -3,8 +3,7 @@ import { action, internalAction, internalMutation, internalQuery } from "./_gene
 import { internal } from "./_generated/api";
 //import { Id } from "./_generated/dataModel";
 import { BillData } from "../types";
-import { XMLParser } from "fast-xml-parser";
-import { extractBillText } from "../utils/dataHelpers";
+import { parseBillInfoFromUrl, getVersionPriority, parseBillXMLData } from "../utils/dataHelpers";
 
 export const getLastCheckedTimestamp = internalQuery({
   args: {},
@@ -68,7 +67,13 @@ export const discoverNewBillFiles = action({
       const newXmlFiles = (data.files ?? []).filter(file => file.link.endsWith('.xml')).filter(file => {
         const fileLastModifiedTime = new Date(file.formattedLastModifiedTime);
         return fileLastModifiedTime.getTime() > lastCheckedTimestampValue;
-      });
+      }).sort((a, b) => {
+        // Sort by last modified time in descending order (latest first)
+        const timeA = new Date(a.formattedLastModifiedTime).getTime();
+        const timeB = new Date(b.formattedLastModifiedTime).getTime();
+        return timeB - timeA;
+      })
+      .slice(0, 10); // Take only the 10 latest;
 
       if (newXmlFiles.length > 0) {
         console.log(`Found ${newXmlFiles.length} new XML files for ${billType}`);
@@ -93,29 +98,6 @@ export const discoverNewBillFiles = action({
     return null;
   },
 });
-
-// Helper function to extract bill information from XML URL
-export const parseBillInfoFromUrl = (xmlUrl: string) => {
-  const urlMatch = xmlUrl.match(/BILLS-(\d{3})([a-zA-Z]+)(\d+)([a-zA-Z]{2,3})\.xml$/);
-  if (!urlMatch) {
-    throw new Error(`Could not parse bill info from URL: ${xmlUrl}`);
-  }
-  
-  const [, congress, billType, billNumber, versionCode] = urlMatch;
-  return {
-    congress: parseInt(congress),
-    billType,
-    billNumber,
-    versionCode
-  };
-};
-
-// Helper function to determine version priority (higher number = more important)
-export const getVersionPriority = (versionCode: string): number => {
-  const versionPriority = ["ih", "pcs", "rh", "eh", "enr"]; // Introduced -> Enrolled
-  const index = versionPriority.indexOf(versionCode);
-  return index === -1 ? -1 : index; // Unknown versions get lowest priority
-};
 
 // Enhanced function to check if we should process this bill version
 export const shouldProcessBillVersion = internalQuery({
@@ -217,137 +199,17 @@ export const ingestAndEnrichBillFile = internalAction({
       }
 
       console.log(`Processing: ${args.xmlUrl} (${processDecision.reason})`);
-      const xmlUrl = args.xmlUrl;
-      const response = await fetch(xmlUrl);
+      
+      // Fetch XML data
+      const response = await fetch(args.xmlUrl);
       if (!response.ok) {
-        console.error(`Failed to fetch ${xmlUrl}: ${response.statusText}`);
+        console.error(`Failed to fetch ${args.xmlUrl}: ${response.statusText}`);
         return null;
       }
-      const data = await response.text(); //xml
+      const xmlData = await response.text();
     
-      // parse the XML data into a json object
-      const parser = new XMLParser({
-        ignoreAttributes: false,
-        attributeNamePrefix: "@_",
-        ignoreDeclaration: true,
-        ignorePiTags: true,
-        parseTagValue: true,
-        isArray: (tagName) => [
-          "cosponsor", "committee-name", "section", "subsection",
-          "paragraph", "subparagraph", "clause", "subclause", "item"
-        ].includes(tagName),
-      });
-      const jsonData = parser.parse(data);
-      
-      // Log the parsed structure to understand the data format
-      //console.log("Parsed XML structure:", JSON.stringify(jsonData, null, 2));
-      
-      const billData = jsonData.bill ?? jsonData.resolution;
-      if (!billData) {
-        console.error(`No 'bill' or 'resolution' root element found in ${args.xmlUrl}`);
-        return null;
-      }
-
-      // --- 2. EXTRACT STRUCTURED METADATA ---
-      
-      // A. Bill Identifier fields
-      const legisNum = billData.form["legis-num"]["#text"] || billData.form["legis-num"]; // Handle both object and string cases
-      const congressText = billData.form.congress["#text"] || billData.form.congress;
-      const congress = parseInt(congressText.match(/(\d+)/)?.[1] || congressText);
-      
-      // Improved regex to handle different spacing and simple bills
-      const billParts = legisNum.match(/(S|H)\.?\s*(?:(J\.?\s*RES\.?|CON\.?\s*RES\.?|RES\.?|R\.?)\s*)?(\d+)/i);
-      if (!billParts) {
-        throw new Error(`Could not parse bill number/type from legis-num: "${legisNum}" in ${args.xmlUrl}`);
-      }
-      
-      // Handle simple bills vs resolutions
-      const chamber = billParts[1]; // S or H
-      const resolutionType = billParts[2] || ''; // Could be undefined for simple bills
-      const billNumber = billParts[3];
-      
-      // Construct bill type
-      let billType;
-      if (!resolutionType) {
-        // Simple bill: S -> s, H -> hr
-        billType = chamber.toLowerCase() === 's' ? 's' : 'hr';
-      } else {
-        // Resolution: combine chamber and resolution type
-        billType = (chamber + resolutionType)
-          .toLowerCase()
-          .replace(/\s/g, '')
-          .replace(/\./g, '');
-      }
-
-      // B. Core Bill Information
-      // The title can also be a complex object. Use our helper on the specific node.
-      const officialTitle = extractBillText(billData.form["official-title"]).trim() || "No official title.";
-      
-      // Short title can be in multiple places. Let's look for it robustly.
-      const firstSection = billData["legis-body"]?.section?.[0];
-      let shortTitle = firstSection?.header === "Short title" ? extractBillText(firstSection.text).trim() : undefined;
-
-      const versionCodeMatch = args.xmlUrl.match(/BILLS-\d{3}[a-zA-Z]+\d+([a-zA-Z]{2,3})\.xml$/);
-      const versionCode = versionCodeMatch ? versionCodeMatch[1] : 'unknown';
-
-      // C. Sponsor and Co-sponsor Information
-      // Handle both single action object and array of actions
-      const actions = Array.isArray(billData.form.action) ? billData.form.action : [billData.form.action].filter(Boolean);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const introAction = actions.find((a: any) => a?.["action-desc"]?.sponsor);
-      
-      let sponsor = { name: "N/A", nameId: undefined };
-      if (introAction?.["action-desc"]?.sponsor) {
-        const sponsorNode = introAction["action-desc"].sponsor;
-        sponsor = {
-          name: sponsorNode["#text"],
-          nameId: sponsorNode["@_name-id"],
-        };
-      }
-
-      // `isArray` in parser options simplifies this. Default to empty array if undefined.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cosponsors = (introAction?.["action-desc"]?.cosponsor || []).map((node: any) => ({
-        name: node["#text"],
-        nameId: node["@_name-id"],
-      }));
-      
-      // D. Dates and Committees
-      const actionDate = introAction?.["action-date"]?.["@_date"] ?? billData.form["action-date"]?.["@_date"] ?? billData.form["attestation-group"]?.["attestation-date"]?.["@_date"];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const committees = (introAction?.["action-desc"]?.["committee-name"] || []).map((node: any) => node["#text"]);
-
-      // E. Full Text Extraction using our NEW helper
-      const legisBody = billData["legis-body"] ?? billData["resolution-body"];
-      const fullText = extractBillText(legisBody).replace(/\s+/g, ' ').trim();
-
-      // F. Fix short title extraction after fullText is available
-      if (!shortTitle) {
-        const shortTitleMatch = fullText.match(/This Act may be cited as the [""]([^"""]+)[""]|This Act may be cited as the ([^.]+)\./i);
-        if (shortTitleMatch) {
-          shortTitle = shortTitleMatch[1] || shortTitleMatch[2];
-        }
-      }
-
-      const cleanedShortTitle = shortTitle
-        ? shortTitle.replace(/This Act may be cited as the\s*\.?$/i, '').replace(/[""]$/, '').trim() 
-        : undefined;
-
-      // --- 3. CONSTRUCT THE FINAL OBJECT ---
-      const extractedData = {
-        congress,
-        billType,
-        billNumber,
-        versionCode,
-        officialTitle,
-        cleanedShortTitle,
-        sponsor,
-        cosponsors,
-        committees,
-        actionDate,
-        xmlUrl: args.xmlUrl,
-        fullText,
-      };
+      // Parse XML data using helper function
+      const extractedData = parseBillXMLData(xmlData, args.xmlUrl);
 
       console.log("extractedData", JSON.stringify(extractedData, null, 2));
 
