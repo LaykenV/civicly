@@ -104,7 +104,6 @@ export const discoverNewBillFiles = action({
         const timeB = new Date(b.formattedLastModifiedTime).getTime();
         return timeB - timeA;
       })
-      .slice(0, 3); // Take only the 3 latest for testing
 
       if (newXmlFiles.length > 0) {
         console.log(`Found ${newXmlFiles.length} new XML files for ${billType}`);
@@ -166,7 +165,6 @@ export const discoverNewBillFilesCron = internalAction({
         const timeB = new Date(b.formattedLastModifiedTime).getTime();
         return timeB - timeA;
       })
-      .slice(0, 1); // Process more files in cron jobs since they run automatically
 
       if (newXmlFiles.length > 0) {
         console.log(`Cron job - Found ${newXmlFiles.length} new XML files for ${billType}`);
