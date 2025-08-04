@@ -1,23 +1,59 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
-  title: "Civicly",
-  description: "Civicly is a platform for civic engagement and education.",
+  title: "Civicly - Making Complex Legislation Accessible",
+  description: "Civicly makes complex legislative information accessible, credible, and empowering for the average citizen. AI-powered bill analysis, semantic search, and real-time legislative tracking.",
+  keywords: [
+    "legislation",
+    "bills",
+    "congress",
+    "politics",
+    "civic engagement",
+    "government",
+    "AI analysis",
+    "legislative tracking"
+  ],
+  authors: [{ name: "Civicly Team" }],
+  creator: "Civicly",
+  publisher: "Civicly",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   icons: {
-    icon: "/convex.svg",
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
+  openGraph: {
+    title: "Civicly - Making Complex Legislation Accessible",
+    description: "AI-powered legislative analysis and tracking platform for civic engagement",
+    url: "https://civicly.com",
+    siteName: "Civicly",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Civicly - Making Complex Legislation Accessible",
+    description: "AI-powered legislative analysis and tracking platform for civic engagement",
+    creator: "@civicly",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -28,11 +64,17 @@ export default function RootLayout({
 }>) {
   return (
     <ConvexAuthNextjsServerProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+      <html lang="en" className="scroll-smooth">
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        </head>
+        <body className="font-body antialiased bg-background text-foreground min-h-screen">
+          <ConvexClientProvider>
+            <div id="root" className="relative">
+              {children}
+            </div>
+          </ConvexClientProvider>
         </body>
       </html>
     </ConvexAuthNextjsServerProvider>

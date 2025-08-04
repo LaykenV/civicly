@@ -1,15 +1,18 @@
 import { Agent } from "@convex-dev/agent";
 import { RAG } from "@convex-dev/rag";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
+//import { google } from "@ai-sdk/google";
 import { components } from "./_generated/api";
 import { action, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 // Initialize the RAG component for bill content search
 export const rag = new RAG(components.rag, {
-  filterNames: ["billType", "congress", "sponsor", "impactAreas", "committees", "billIdentifier"],
+  filterNames: ["billIdentifier", "billType", "congress", "sponsor"], // Temporarily removed "impactAreas" 
   textEmbeddingModel: openai.embedding("text-embedding-3-small"),
   embeddingDimension: 1536,
 });
@@ -17,7 +20,7 @@ export const rag = new RAG(components.rag, {
 // Initialize the Agent for bill analysis
 export const billAnalysisAgent = new Agent(components.agent, {
   name: "Bill Analysis Agent",
-  chat: openai("gpt-4o"),
+  chat: openai.chat("gpt-4o-mini"),
   instructions: `You are an expert legal and policy analyst specializing in U.S. federal legislation. 
 Your role is to:
 1. Analyze bills and provide clear, accurate summaries
@@ -80,11 +83,11 @@ export const searchBills = action({
     const filters = [];
     if (args.billType) filters.push({ name: "billType", value: args.billType });
     if (args.congress) filters.push({ name: "congress", value: args.congress });
-    if (args.impactAreas && args.impactAreas.length > 0) {
+    /*if (args.impactAreas && args.impactAreas.length > 0) {
       // Filter bills that contain any of the specified impact areas
       const impactAreasFilter = args.impactAreas.join(",");
       filters.push({ name: "impactAreas", value: impactAreasFilter });
-    }
+    }*/
 
     // Perform RAG search with chunked context
     const { results, entries } = await rag.search(ctx, {
@@ -343,11 +346,11 @@ export const generalLegislativeChat = action({
     if (args.context?.congress) {
       filters.push({ name: "congress", value: args.context.congress });
     }
-    if (args.context?.impactAreas && args.context.impactAreas.length > 0) {
+    /*if (args.context?.impactAreas && args.context.impactAreas.length > 0) {
       // Filter bills that contain any of the specified impact areas
       const impactAreasFilter = args.context.impactAreas.join(",");
       filters.push({ name: "impactAreas", value: impactAreasFilter });
-    }
+    }*/
     if (args.context?.billTypes) {
       args.context.billTypes.forEach(type => {
         filters.push({ name: "billType", value: type });

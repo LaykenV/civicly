@@ -104,5 +104,18 @@ export default defineSchema({
   lastCheckedTimestamp: defineTable({
     timestamp: v.number(),
   }).index("by_timestamp", ["timestamp"]),
+
+  // Analytics table for search tracking
+  searchAnalytics: defineTable({
+    query: v.string(),
+    resultCount: v.number(),
+    userId: v.optional(v.id("users")),
+    filters: v.optional(v.object({
+      billType: v.optional(v.string()),
+      congress: v.optional(v.number()),
+      impactAreas: v.optional(v.array(v.string())),
+    })),
+    timestamp: v.number(),
+  }).index("by_timestamp", ["timestamp"]),
   
 });

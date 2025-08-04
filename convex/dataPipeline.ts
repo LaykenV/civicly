@@ -104,7 +104,7 @@ export const discoverNewBillFiles = action({
         const timeB = new Date(b.formattedLastModifiedTime).getTime();
         return timeB - timeA;
       })
-      .slice(0, 1); // Take only the 1 latest for testing
+      .slice(0, 3); // Take only the 3 latest for testing
 
       if (newXmlFiles.length > 0) {
         console.log(`Found ${newXmlFiles.length} new XML files for ${billType}`);
@@ -504,21 +504,28 @@ ${chunk}`;
 
       console.log(`Chunked bill ${billIdentifier} into ${finalChunks.length} chunks`);
 
+      // Prepare filter values for debugging
+      const filterValues = [
+        { name: "billIdentifier", value: billIdentifier }, // Index 0 - unique identifier for precise filtering
+        { name: "billType", value: extractedData.billType }, 
+        { name: "congress", value: extractedData.congress.toString() },  
+        { name: "sponsor", value: extractedData.sponsor.name }, 
+        // Temporarily disabled due to RAG component issues with comma-separated values
+        // ...(extractedData.impactAreas.length > 0 ? [{ name: "impactAreas", value: extractedData.impactAreas.join(", ") }] : []),
+        // Temporarily commented out until RAG component filter issue is resolved
+        // ...(extractedData.committees.length > 0 ? [{ name: "committees", value: extractedData.committees.join(", ") }] : []),
+      ];
+
+      console.log(`Filter values for ${billIdentifier}:`, JSON.stringify(filterValues, null, 2));
+
       // Add the chunked content to RAG
       const { entryId } = await rag.add(ctx, {
         namespace: "bills", // Global namespace for all bills
         key: billIdentifier, // Unique key for this bill
         chunks: finalChunks, // Use chunked content instead of single text
         title: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber}: ${extractedData.cleanedShortTitle || extractedData.officialTitle}`,
-        // Store metadata for filtering
-        filterValues: [
-          { name: "billIdentifier", value: billIdentifier }, // Add unique identifier for precise filtering
-          { name: "billType", value: extractedData.billType },
-          { name: "congress", value: extractedData.congress.toString() },
-          { name: "sponsor", value: extractedData.sponsor.name },
-          ...extractedData.impactAreas.map(area => ({ name: "impactArea", value: area })),
-          ...extractedData.committees.map(committee => ({ name: "committee", value: committee })),
-        ],
+        // Store metadata for filtering (order now matches filterNames in agent.ts)
+        filterValues,
       });
 
       console.log(`Successfully vectorized bill ${billIdentifier} with entry ID: ${entryId}`);

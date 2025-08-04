@@ -1,0 +1,243 @@
+# Design Plan - Updated for Convex Backend Compatibility
+
+- Design philosophy
+    - The application's purpose is to make complex legislative information accessible, credible, and empowering for the average citizen. The design will reflect this by being:
+    - **Trustworthy & Non-Partisan:** A clean, professional aesthetic that builds user confidence. The design will prioritize information over flashy graphics.
+    - **Clear & Accessible:** Using high-contrast palettes, logical layouts, and a clear visual hierarchy to make dense information easy to understand on all devices.
+    - **Empowering & Efficient:** The user experience will be intuitive, guiding users to insights quickly without friction.
+- Design system
+    - **A. Color Palette:**
+        - **Primary (Brand & Interactive):** Royal Blue: #4263EB (for links, active tabs, primary buttons).
+        - **Backgrounds:**
+            - **Light Mode:** Alabaster: #FAFAFA
+            - **Dark Mode:** Very Dark Blue: #1A202C
+        - **Text:**
+            - **Light Mode:** Charcoal: #2D3748
+            - **Dark Mode:** Light Gray: #A0AEC0
+        - **Accent (CTA & Pro Features):** Gold: #D69E2E. Used for high-value actions like "Analyze Impact on Me" and subscription buttons.
+        - **Status Indicators:** Green (Passed), Orange (In Committee), Red (Failed).
+    - **B. Typography:**
+        - **Headings:** Lora (Serif font for authority and readability).
+        - **Body/UI Text:** Inter (Sans-Serif font for clarity on screens).
+        - **Bill Text:** Source Code Pro (Monospaced font to distinguish raw legislative text).
+
+## Authentication Pages
+- **Backend Data Sources:**
+    - `@convex-dev/auth` with Google OAuth and email/password providers
+    - `userProfiles` table for extended user data
+- **Sign In/Sign Up Flow:**
+    - Multi-provider auth options (Google OAuth button + email/password form)
+    - Seamless redirect to intended page after authentication
+    - User profile creation flow for new users
+- **Functionalities:**
+    - Social login with Google
+    - Traditional email/password authentication
+    - Session management and persistent login
+    - Profile completion flow for new users
+
+## Homepage
+- **Backend Data Sources:**
+    - `bills` table (filtered by various criteria)
+    - RAG component for semantic search
+    - `userProfiles` for personalized "Your Feed"
+    - `notifications` table for user-followed items
+- **Smart Searchbar Enhancement:**
+    - **Semantic Search Integration:** Uses RAG component for intelligent bill discovery
+    - **Command K to focus** - keyboard shortcut
+    - **Typewriter placeholder** cycling through examples like "healthcare reform", "climate policy", "immigration"
+    - **Real-time Results Dropdown:**
+        - **Top Match:** Single most relevant result from semantic search
+        - **Bills:** Matching bills with bill number, title, and tagline
+        - **Politicians:** Matching politicians with name, party, state
+        - **Smart Suggestions:** AI-powered query completions
+- **Dynamic Content Sections:**
+    - **Trending Bills:** 
+        - Data: Recent bills ordered by activity/engagement
+        - Display: Horizontal scroll cards with bill number, title, tagline, sponsor, status badge
+    - **Your Feed (Authenticated Users):**
+        - Data: Bills matching user's followed politicians, committees, or impact areas from profile
+        - Display: Personalized recommendations based on user interests
+    - **This Week in Congress:**
+        - Data: Bills with recent activity (new versions, committee actions)
+        - Display: Timeline-style cards showing latest developments
+    - **By Impact Area:**
+        - Data: Bills grouped by the 27 predefined impact areas
+        - Display: Categorical browse sections
+- **Functionalities:**
+    - Real-time search with semantic understanding
+    - Personalized content for authenticated users
+    - Infinite scroll or pagination for large result sets
+    - Quick actions: Follow bill, share, save for later
+
+## Settings Page (Authenticated)
+- **Backend Data Sources:**
+    - `userProfiles` table for personal information
+    - `notifications` table for subscription management
+    - `userVotes` table for voting history
+    - Auth tables for account management
+- **Account Section:**
+    - **Authentication Management:** 
+        - View connected providers (Google, email)
+        - Password change functionality
+        - Delete account with data export option
+    - **Subscription Management:**
+        - Current plan status (Free/Pro)
+        - Usage tracking (API calls, AI chat sessions)
+        - Billing and payment history
+- **Profile Section:**
+    - **Personal Information:**
+        - Name, email (from auth)
+        - Location (for relevance to local representatives)
+        - Occupation and income bracket
+        - Family status (affects tax/social policy relevance)
+    - **Legislative Interests:**
+        - Select from 27 impact areas for personalized content
+        - Preferred information density (summary vs detailed)
+        - Language and accessibility preferences
+- **Privacy & Notifications:**
+    - **Notification Preferences:**
+        - Email frequency settings
+        - Bill update notifications (followed items)
+        - Weekly digest subscriptions
+        - Breaking legislative news alerts
+    - **Data & Privacy:**
+        - Data export functionality
+        - Privacy settings for profile sharing
+        - API key management for developers
+- **My Civic Engagement:**
+    - **Voting History:** Personal positions on bills (from userVotes)
+    - **Impact Analysis History:** Previous "Analyze Impact on Me" results
+    - **Followed Items:** Bills, politicians, committees being tracked
+
+## Bill Page
+- **Backend Data Sources:**
+    - `bills` table for core bill info and AI analysis
+    - `billVersions` table for specific version content
+    - `politicians` table for sponsor/cosponsor info
+    - `chats` table for conversation history
+    - Agent component for AI interactions
+    - RAG component for contextual search within bill
+- **URL Structure:** `/bills/[congress]/[billType]/[billNumber]` (e.g., `/bills/119/hr/1234`)
+- **Header Section:**
+    - **Bill Identity:** Congress number, bill type, number (e.g., "119th Congress - H.R. 1234")
+    - **Title & Tagline:** Official title + AI-generated engaging tagline
+    - **Status Indicator:** Current status with colored badge and progress visualization
+    - **Sponsor Information:** 
+        - Primary sponsor with party, state, photo
+        - Cosponsors count with expandable list
+        - Committee assignments and current location
+    - **Impact Areas:** Visual tags for the AI-categorized impact areas
+    - **Action Buttons:**
+        - ★ Follow button (toggles notification subscription)
+        - Civicly Vote (Pro users) - personal position tracking
+        - Share button with social media integration
+- **Main Content Area:**
+    - **Desktop Layout (Two-Pane):**
+        - **Left Pane - Tabbed Interface:**
+            - **AI Summary Tab:**
+                - Interactive, collapsible sections
+                - Citations link to specific bill text sections
+                - "Current Law vs. Proposed Changes" comparisons
+                - Impact analysis with visual explanations
+            - **Chat Tab:**
+                - Conversation interface with AI agent
+                - Chat history from previous sessions (from chats table)
+                - Context-aware responses using bill content
+                - Usage tracking for free/pro limits
+        - **Right Pane - Bill Text:**
+            - Full bill text from current version (billVersions table)
+            - Virtualized scrolling for performance
+            - Highlighted sections when citations are clicked
+            - Version selector dropdown for comparing different versions
+    - **Mobile Layout (Three Tabs):**
+        - **Summary Tab:** AI analysis with collapsible sections
+        - **Chat Tab:** Full-screen chat interface
+        - **Bill Text Tab:** Optimized reading experience
+- **Floating Action Dock:**
+    - **Left:** "Analyze Impact on Me" button (Pro feature, Gold accent)
+    - **Center:** Expandable chat input - "Ask about this bill..."
+    - **Right:** Download PDF and follow buttons
+- **Functionalities:**
+    - **Real-time AI Chat:** Context-aware conversations about bill content
+    - **Personal Impact Analysis:** AI analysis using user profile + bill summary
+    - **Text Search:** Find specific terms within bill text
+    - **Version Comparison:** Side-by-side view of bill changes over time
+    - **Citation Navigation:** Click citations to jump to relevant text sections
+    - **Progress Tracking:** Visual bill lifecycle from introduction to law
+
+## Politicians Page
+- **Backend Data Sources:**
+    - `politicians` table with comprehensive politician data
+    - `bills` table filtered by sponsorId for sponsored legislation
+    - `userVotes` table for compatibility scoring
+    - Future: ProPublica and OpenSecrets API data
+- **URL Structure:** `/politicians/[govinfoId]` or `/politicians/[name-slug]`
+- **Politician Profile:**
+    - **Header:** Name, party, state, chamber, official photo
+    - **Current Role:** Committee memberships, leadership positions
+    - **Contact Information:** Official contact details and office locations
+- **Legislative Activity:**
+    - **Sponsored Bills:** Bills where this politician is primary sponsor
+    - **Cosponsored Bills:** Bills they've supported
+    - **Committee Work:** Bills worked on through committee assignments
+    - **Voting Patterns:** Analysis of voting alignment with different coalitions
+- **User Interaction Features:**
+    - **Compatibility Score:** Percentage alignment with user's votes on bills
+    - **Follow Politician:** Notification subscription for their legislative activity
+    - **Impact on You:** How this politician's sponsored bills affect user's profile
+- **Financial Transparency (Future):**
+    - Campaign finance data integration
+    - Lobbying interaction tracking
+    - Conflict of interest disclosures
+
+## Search Results Page
+- **Backend Data Sources:**
+    - RAG component for semantic search across all content
+    - `bills` table with full-text search indexes
+    - `politicians` table with name/location search
+- **Advanced Search Interface:**
+    - **Semantic Search:** Natural language queries powered by RAG
+    - **Filters:**
+        - Congress number and date ranges
+        - Bill status and type
+        - Impact areas (27 categories)
+        - Sponsor party and state
+        - Committee assignments
+- **Results Display:**
+    - **Unified Results:** Bills, politicians, and topics in relevance order
+    - **Faceted Navigation:** Filter counts and quick refinement
+    - **Rich Previews:** Bill cards with AI taglines and relevance explanations
+    - **Save Searches:** Bookmark complex queries for future reference
+
+## API Documentation Page (B2B)
+- **Backend Data Sources:**
+    - `apiKeys` table for user API key management
+    - Usage analytics for API consumption tracking
+- **Developer Portal:**
+    - **API Explorer:** Interactive documentation with live examples
+    - **Authentication:** API key generation and management
+    - **Rate Limits:** Clear tier descriptions and usage monitoring
+    - **Use Cases:** Example applications and integration guides
+    - **Pricing:** Transparent tier structure with usage-based billing
+
+## Real-time Features Across All Pages
+- **Backend Integration:**
+    - Convex reactive queries for instant updates
+    - Real-time bill status changes
+    - Live chat message delivery
+    - Instant search result updates
+    - Notification badge updates
+- **Performance Optimizations:**
+    - ISR for bill pages (SEO + performance)
+    - Smart pagination for large datasets
+    - Optimistic updates for user interactions
+    - Virtualized lists for large content areas
+
+## Mobile-Specific Adaptations
+- **Navigation:** Bottom tab bar for core sections
+- **Search:** Full-screen search overlay with voice input
+- **Reading:** Optimized bill text display with reader mode
+- **Chat:** Full-screen chat interface with swipe gestures
+- **Sharing:** Native mobile sharing integration
+
+This updated design plan fully leverages your Convex backend infrastructure while maintaining the user-centric design philosophy. Each page is designed around the specific data structures and capabilities you've implemented, ensuring seamless integration between frontend and backend.

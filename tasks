@@ -17,3 +17,8 @@ change to workflow
 cron should call base func
 run pipeline
 render bills
+
+check homepage functions
+update globals css with new colors etc
+agent error
+improve ui
