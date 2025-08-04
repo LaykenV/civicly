@@ -4,10 +4,11 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth, useQuery, useAction } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
+import { BillSearchResult, BillSearchResponse } from "../types";
 
 /*
   Beautiful, opinionated redesign:
@@ -15,7 +16,7 @@ import { Id } from "../convex/_generated/dataModel";
   - Rich typography hierarchy with Lora headings & Inter body
   - Polished header with glass, active states, and mobile menu
   - Hero: layered gradient, glow rings, CTA duo, subtle animated dots
-  - Search: spotlight card, command-hint, recent search chips, clear button
+  - Search: spotlight card, command-hint, dynamic dropdown, clear button
   - Latest Bills: luxe cards, status badge with icons, content density, hover lift
   - Footer: gradient top border, tighter rhythm, refined colors
   - Accessibility: focus-visible rings, icon labels, time elements, ARIA
@@ -86,6 +87,23 @@ function IconButton({
       {children}
     </button>
   );
+}
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 /* ---------- Header ---------- */
@@ -304,7 +322,11 @@ function HeroSection() {
 function SearchSection() {
   const [value, setValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [recent, setRecent] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  const searchBills = useAction(api.agent.searchBills);
+  const debouncedValue = useDebounce(value, 300);
 
   const placeholders = useMemo(
     () => [
@@ -318,10 +340,7 @@ function SearchSection() {
     []
   );
 
-  useEffect(() => {
-    const r = JSON.parse(localStorage.getItem("recent-searches") || "[]");
-    setRecent(r.slice(0, 6));
-  }, []);
+  const [searchResults, setSearchResults] = useState<BillSearchResponse | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -341,13 +360,45 @@ function SearchSection() {
     return () => window.removeEventListener("keydown", onK);
   }, []);
 
-  const onSubmit = (q: string) => {
-    if (!q.trim()) return;
-    const next = [q.trim(), ...recent.filter((r) => r !== q.trim())].slice(0, 6);
-    setRecent(next);
-    localStorage.setItem("recent-searches", JSON.stringify(next));
-    // Hook your search navigation here
-    //router.push(`/search?q=${encodeURIComponent(q.trim())}`)
+  // Perform search when debounced value changes
+  useEffect(() => {
+    if (debouncedValue.trim() && debouncedValue.length > 2) {
+      setIsSearching(true);
+      searchBills({
+        query: debouncedValue,
+        limit: 6,
+      })
+        .then((results) => {
+          setSearchResults(results);
+          setShowDropdown(true);
+        })
+        .catch((error) => {
+          console.error("Search error:", error);
+          setSearchResults(null);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
+    } else {
+      setSearchResults(null);
+      setShowDropdown(false);
+    }
+  }, [debouncedValue, searchBills]);
+
+  const handleResultClick = (result: BillSearchResult) => {
+    // Extract bill information and navigate
+    // For now, just log the result
+    console.log("Selected result:", result);
+    setShowDropdown(false);
+    setValue("");
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+    if (!e.target.value.trim()) {
+      setShowDropdown(false);
+      setSearchResults(null);
+    }
   };
 
   return (
@@ -358,75 +409,104 @@ function SearchSection() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <div
-          className={cn(
-            "relative rounded-2xl p-5 md:p-6",
-            "bg-white/70 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-            "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl"
-          )}
-        >
-          <label htmlFor="main-search" className="sr-only">
-            Search bills
-          </label>
-
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            <input
-              id="main-search"
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onSubmit(value);
-              }}
-              className={cn(
-                "w-full rounded-xl border-2 border-transparent bg-transparent",
-                "pl-12 pr-28 py-4 text-lg md:text-xl",
-                "placeholder:text-[hsl(230_12%_60%)]/80 dark:placeholder:text-[hsl(220_12%_78%)]/70",
-                "text-[hsl(230_16%_20%)] dark:text-[hsl(220_12%_92%)]",
-                "focus:outline-none focus:border-[hsl(233_85%_60%)]/60"
-              )}
-              placeholder={placeholders[placeholderIndex]}
-              autoComplete="off"
-            />
-
-            {value && (
-              <button
-                type="button"
-                onClick={() => setValue("")}
-                className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white"
-                aria-label="Clear search"
-                title="Clear"
-              >
-                ×
-              </button>
+        <div className="relative">
+          <div
+            className={cn(
+              "relative rounded-2xl p-5 md:p-6",
+              "bg-white/70 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+              "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl"
             )}
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-              <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
-                ⌘K
-              </kbd>
+          >
+            <label htmlFor="main-search" className="sr-only">
+              Search bills
+            </label>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                {isSearching ? (
+                  <div className="animate-spin h-5 w-5 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
+                ) : (
+                  <svg className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
+              </div>
+
+              <input
+                id="main-search"
+                type="text"
+                value={value}
+                onChange={handleInputChange}
+                className={cn(
+                  "w-full rounded-xl border-2 border-transparent bg-transparent",
+                  "pl-12 pr-28 py-4 text-lg md:text-xl",
+                  "placeholder:text-[hsl(230_12%_60%)]/80 dark:placeholder:text-[hsl(220_12%_78%)]/70",
+                  "text-[hsl(230_16%_20%)] dark:text-[hsl(220_12%_92%)]",
+                  "focus:outline-none focus:border-[hsl(233_85%_60%)]/60"
+                )}
+                placeholder={placeholders[placeholderIndex]}
+                autoComplete="off"
+              />
+
+              {value && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue("");
+                    setShowDropdown(false);
+                    setSearchResults(null);
+                  }}
+                  className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white"
+                  aria-label="Clear search"
+                  title="Clear"
+                >
+                  ×
+                </button>
+              )}
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
+                  ⌘K
+                </kbd>
+              </div>
             </div>
           </div>
 
-          {recent.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {recent.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => {
-                    setValue(r);
-                    onSubmit(r);
-                  }}
-                  className="text-sm rounded-lg px-3 py-1.5 bg-[hsl(233_85%_60%)]/10 dark:bg-white/[0.08] text-[hsl(233_85%_40%)] dark:text-white/90 hover:bg-[hsl(233_85%_60%)]/15 dark:hover:bg-white/[0.12] transition-colors"
-                >
-                  {r}
-                </button>
-              ))}
+          {/* Dynamic Search Results Dropdown */}
+          {showDropdown && searchResults && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-50">
+              <div className="rounded-2xl p-4 bg-white/90 dark:bg-white/[0.08] border border-black/5 dark:border-white/10 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+                {searchResults.summary && (
+                  <div className="mb-4 p-3 rounded-lg bg-[hsl(233_85%_60%)]/10 dark:bg-white/[0.06]">
+                    <p className="text-sm text-[hsl(233_85%_45%)] dark:text-white/90">{searchResults.summary}</p>
+                  </div>
+                )}
+                
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {searchResults.results.map((result, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleResultClick(result)}
+                      className="w-full text-left p-3 rounded-lg hover:bg-white/60 dark:hover:bg-white/[0.08] transition-colors border border-transparent hover:border-[hsl(233_85%_60%)]/20"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mb-1">
+                            {result.billInfo}
+                          </div>
+                          <p className="text-sm text-[hsl(230_16%_20%)] dark:text-white/90 line-clamp-2 mb-2">
+                            {result.relevantText}
+                          </p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[hsl(233_85%_60%)]/15 dark:bg-white/[0.08] text-xs text-[hsl(233_85%_45%)] dark:text-white/80">
+                            {(result.score * 100).toFixed(0)}% match
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

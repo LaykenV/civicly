@@ -68,4 +68,109 @@ export interface ProcessDecision {
   shouldProcess: boolean;
   reason: string;
   existingBillId?: string; // This will be Id<"bills"> in Convex context
+}
+
+// NEW: Shared types for frontend-backend communication
+
+// Database entity types (matches schema.ts)
+export interface DbBill {
+  _id: string; // Will be Id<"bills"> in Convex context
+  _creationTime: number;
+  congress: number;
+  billType: string;
+  billNumber: string;
+  title: string;
+  cleanedShortTitle?: string;
+  sponsorId?: string; // Will be Id<"politicians"> in Convex context
+  committees?: string[];
+  latestVersionCode?: string;
+  latestActionDate?: string;
+  status: string;
+  tagline?: string;
+  summary?: string;
+  impactAreas?: string[];
+}
+
+export interface DbPolitician {
+  _id: string; // Will be Id<"politicians"> in Convex context
+  _creationTime: number;
+  name: string;
+  govinfoId?: string;
+  propublicaId?: string;
+  opensecretsId?: string;
+  party: string;
+  state: string;
+  chamber: "House" | "Senate";
+}
+
+export interface DbBillVersion {
+  _id: string; // Will be Id<"billVersions"> in Convex context
+  _creationTime: number;
+  billId: string; // Will be Id<"bills"> in Convex context
+  versionCode: string;
+  title: string;
+  publishedDate: string;
+  fullText: string;
+  xmlUrl: string;
+}
+
+// API response types
+export interface BillSearchResult {
+  entryId: string;
+  billInfo: string;
+  relevantText: string;
+  score: number;
+}
+
+export interface BillSearchResponse {
+  results: BillSearchResult[];
+  summary: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  sources: string[];
+  confidence: "low" | "medium" | "high";
+}
+
+export interface GeneralChatResponse {
+  answer: string;
+  relevantBills: Array<{
+    billType: string;
+    billNumber: string;
+    title: string;
+    relevance: string;
+  }>;
+  searchSummary: string;
+}
+
+// Search filter types
+export interface SearchFilters {
+  billType?: string;
+  congress?: string;
+  impactAreas?: string[];
+  sponsor?: string;
+  limit?: number;
+}
+
+// Subset of ExtractedBillData for AI analysis (used in getBillSummary)
+export interface BillAnalysisInput {
+  fullText: string;
+  billType: string;
+  billNumber: string;
+  versionCode: string;
+  officialTitle: string;
+  cleanedShortTitle?: string;
+  sponsor: BillSponsor;
+  cosponsors: BillSponsor[];
+  committees: string[];
+  actionDate?: string;
+}
+
+// Error types for the pipeline
+export interface PipelineError {
+  type: 'parsing' | 'network' | 'ai' | 'database' | 'validation';
+  message: string;
+  context?: Record<string, unknown>;
+  timestamp: number;
 } 

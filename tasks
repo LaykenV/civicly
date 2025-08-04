@@ -1,24 +1,9 @@
-//oauth
-//remove boilerplate
-//set up routing
-d//ata
-//get xml parsing right
-turn pipeline into workflow
-//get ai Summary
-//vector store 
-//save all data
-run for all bills
 
-//fix vector for chunking
-//check work
-//status?
-//gemini > 4o?
+gemini > 4o?
 change to workflow
 cron should call base func
-run pipeline
 render bills
 
-check homepage functions
-update globals css with new colors etc
-agent error
+group results
 improve ui
+update globals css with new colors etc

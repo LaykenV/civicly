@@ -7,6 +7,7 @@ import { action, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { BillSearchResponse, ChatResponse, GeneralChatResponse } from "../types";
 
 const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -78,7 +79,7 @@ export const searchBills = action({
     })),
     summary: v.string(),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<BillSearchResponse> => {
     // Build filters based on provided criteria
     const filters = [];
     if (args.billType) filters.push({ name: "billType", value: args.billType });
@@ -203,11 +204,7 @@ export const chatAboutBill = action({
     sources: v.array(v.string()),
     confidence: v.string(),
   }),
-  handler: async (ctx, args): Promise<{
-    answer: string;
-    sources: string[];
-    confidence: string;
-  }> => {
+  handler: async (ctx, args): Promise<ChatResponse> => {
     // Get authenticated user
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -311,16 +308,7 @@ export const generalLegislativeChat = action({
     })),
     searchSummary: v.string(),
   }),
-  handler: async (ctx, args): Promise<{
-    answer: string;
-    relevantBills: Array<{
-      billType: string;
-      billNumber: string;
-      title: string;
-      relevance: string;
-    }>;
-    searchSummary: string;
-  }> => {
+  handler: async (ctx, args): Promise<GeneralChatResponse> => {
     // Get authenticated user
     const userId = await getAuthUserId(ctx);
     if (!userId) {

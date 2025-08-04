@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-import { BillData, ExtractedBillData } from "../types";
+import { BillData, ExtractedBillData, BillAnalysisInput } from "../types";
 import { parseBillInfoFromUrl, getVersionPriority, parseBillXMLData, getBillStatusFromVersionCode } from "../utils/dataHelpers";
 import { billAnalysisAgent, rag } from "./agent";
 
@@ -326,7 +326,23 @@ export const ingestAndEnrichBillFile = internalAction({
       console.log("extractedData", JSON.stringify(extractedData, null, 2));
 
       // Store the extracted data in the database
-      await ctx.runMutation(internal.dataPipeline.storeBillData, extractedData);
+      await ctx.runMutation(internal.dataPipeline.storeBillData, {
+        congress: extractedData.congress,
+        billType: extractedData.billType,
+        billNumber: extractedData.billNumber,
+        versionCode: extractedData.versionCode,
+        officialTitle: extractedData.officialTitle,
+        cleanedShortTitle: extractedData.cleanedShortTitle,
+        sponsor: extractedData.sponsor,
+        cosponsors: extractedData.cosponsors,
+        committees: extractedData.committees,
+        actionDate: extractedData.actionDate,
+        xmlUrl: extractedData.xmlUrl,
+        fullText: extractedData.fullText,
+        summary: extractedData.summary,
+        tagLine: extractedData.tagLine,
+        impactAreas: extractedData.impactAreas,
+      });
 
       return null;
     } catch (error) {
@@ -353,7 +369,7 @@ export const getBillSummary = internalAction({
   },
   returns: billSummaryDataValidator, 
   handler: async (ctx, args) => {
-    const { extractedData } = args;
+    const { extractedData }: { extractedData: BillAnalysisInput } = args;
     
     try {
       // Create a detailed prompt for bill analysis
