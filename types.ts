@@ -51,7 +51,6 @@ export interface ExtractedBillData {
   xmlUrl: string;
   fullText: string;
   summary: string;
-  ragId: string;
   tagLine: string;
   impactAreas: string[];
 }

@@ -27,7 +27,6 @@ export default defineSchema({
     summary: v.optional(v.string()), // AI-generated summary of the latest version
     changeAnalysis: v.optional(v.any()), // For "Current vs. Proposed"
     impactAreas: v.optional(v.array(v.string())), // ["Finance", "Healthcare"]
-    ragId: v.optional(v.string()), // RAG entry ID for tracking/debugging
   })
     // Unique identifier for a bill concept
     .index("by_identifier", ["congress", "billType", "billNumber"])
@@ -83,7 +82,7 @@ export default defineSchema({
   chats: defineTable({
     userId: v.id("users"),
     billId: v.optional(v.id("bills")),
-    threadId: v.string(), // String type for thread ID (compatible with agent)
+    threadId: v.string(), // Thread ID from the agent component (string type)
   })
     .index("by_user_bill", ["userId", "billId"])
     .index("by_threadId", ["threadId"]),
@@ -104,6 +103,6 @@ export default defineSchema({
 
   lastCheckedTimestamp: defineTable({
     timestamp: v.number(),
-  }),
+  }).index("by_timestamp", ["timestamp"]),
   
 });

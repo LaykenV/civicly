@@ -12,6 +12,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.0",
     "@ai-sdk/openai": "^2.0.0",
     "@convex-dev/agent": "^0.1.17",
     "@convex-dev/auth": "^0.0.81",

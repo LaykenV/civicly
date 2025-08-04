@@ -264,8 +264,56 @@ export const parseBillXMLData = (xmlData: string, xmlUrl: string): ExtractedBill
     xmlUrl,
     fullText,
     summary: "",
-    ragId: "",
     tagLine: "",
     impactAreas: [],
   };
+};
+
+/**
+ * Maps Library of Congress version codes to human-readable bill statuses
+ * Based on the official govinfo.gov version code system
+ * Reference: https://www.govinfo.gov/help/bills
+ * @param versionCode - The version code to map (e.g., "ih", "eh", "enr")
+ * @returns Human-readable status string
+ */
+export const getBillStatusFromVersionCode = (versionCode: string): string => {
+  // Map version codes to human-readable statuses
+  const versionToStatus: Record<string, string> = {
+    // Introduced versions
+    'ih': 'Introduced in House',
+    'is': 'Introduced in Senate',
+    
+    // Committee stages
+    'rh': 'Reported in House',
+    'rs': 'Reported in Senate', 
+    'rch': 'Referred to Committee (House)',
+    'rcs': 'Referred to Committee (Senate)',
+    
+    // Calendar/Floor stages
+    'pch': 'Placed on Calendar (House)',
+    'pcs': 'Placed on Calendar (Senate)',
+    
+    // Passed one chamber
+    'eh': 'Passed House',
+    'es': 'Passed Senate',
+    'eah': 'Passed House (Amended)',
+    'eas': 'Passed Senate (Amended)',
+    
+    // Final stages
+    'enr': 'Enrolled (Sent to President)',
+    'pl': 'Public Law',
+    
+    // Conference and other stages
+    'cph': 'Conference Report (House)',
+    'cps': 'Conference Report (Senate)',
+    'pp': 'Public Print',
+    'sc': 'Sponsor Changes',
+    
+    // Resolutions specific
+    'ath': 'Agreed to (House)',
+    'ats': 'Agreed to (Senate)',
+  };
+  
+  // Return mapped status or a fallback with the version code
+  return versionToStatus[versionCode.toLowerCase()] || `Status: ${versionCode.toUpperCase()}`;
 };

@@ -5,10 +5,15 @@ d//ata
 //get xml parsing right
 turn pipeline into workflow
 //get ai Summary
-vector store 
-save all data
+//vector store 
+//save all data
 run for all bills
 
-fix vector for chunking
-status?
-gemini > 4o?
+//fix vector for chunking
+//check work
+//status?
+//gemini > 4o?
+change to workflow
+cron should call base func
+run pipeline
+render bills

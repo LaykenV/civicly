@@ -3,7 +3,7 @@ import { action, internalAction, internalMutation, internalQuery } from "./_gene
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { BillData, ExtractedBillData } from "../types";
-import { parseBillInfoFromUrl, getVersionPriority, parseBillXMLData } from "../utils/dataHelpers";
+import { parseBillInfoFromUrl, getVersionPriority, parseBillXMLData, getBillStatusFromVersionCode } from "../utils/dataHelpers";
 import { billAnalysisAgent, rag } from "./agent";
 
 // Convex validators for our types
@@ -26,7 +26,6 @@ export const extractedBillDataValidator = v.object({
   xmlUrl: v.string(),
   fullText: v.string(),
   summary: v.string(),
-  ragId: v.string(),
   tagLine: v.string(),
   impactAreas: v.array(v.string()),
 });
@@ -205,7 +204,7 @@ export const shouldProcessBillVersion = internalQuery({
       // Check if this exact XML file was already processed
       const existingVersion = await ctx.db
         .query("billVersions")
-        .filter((q) => q.eq(q.field("xmlUrl"), args.xmlUrl))
+        .withIndex("by_xmlUrl", (q) => q.eq("xmlUrl", args.xmlUrl))
         .first();
       
       if (existingVersion) {
@@ -324,8 +323,7 @@ export const ingestAndEnrichBillFile = internalAction({
       extractedData.impactAreas = summaryData.impactAreas;
 
       // Vectorize the enriched data
-      const ragId = await ctx.runAction(internal.dataPipeline.vectorizeBillData, { extractedData });
-      extractedData.ragId = ragId;
+      await ctx.runAction(internal.dataPipeline.vectorizeBillData, { extractedData });
 
       console.log("extractedData", JSON.stringify(extractedData, null, 2));
 
@@ -438,30 +436,83 @@ export const vectorizeBillData = internalAction({
       // Create a unique namespace for this bill
       const billIdentifier = `${extractedData.congress}-${extractedData.billType}-${extractedData.billNumber}`;
       
-      // Prepare the text content for vectorization
-      const contentToVectorize = `
-Title: ${extractedData.officialTitle}
-${extractedData.cleanedShortTitle ? `Short Title: ${extractedData.cleanedShortTitle}` : ''}
-Type: ${extractedData.billType.toUpperCase()} ${extractedData.billNumber}
-Congress: ${extractedData.congress}
-Version: ${extractedData.versionCode}
-Sponsor: ${extractedData.sponsor.name}
-Committees: ${extractedData.committees.join(", ")}
-Summary: ${extractedData.summary}
-Tag Line: ${extractedData.tagLine}
-Impact Areas: ${extractedData.impactAreas.join(", ")}
+      // Prepare metadata content (this will be in every chunk)
+      const metadataContent = `
+      Title: ${extractedData.officialTitle}
+      ${extractedData.cleanedShortTitle ? `Short Title: ${extractedData.cleanedShortTitle}` : ''}
+      Type: ${extractedData.billType.toUpperCase()} ${extractedData.billNumber}
+      Congress: ${extractedData.congress}
+      Version: ${extractedData.versionCode}
+      Sponsor: ${extractedData.sponsor.name}
+      Committees: ${extractedData.committees.join(", ")}
+      Summary: ${extractedData.summary}
+      Tag Line: ${extractedData.tagLine}
+      Impact Areas: ${extractedData.impactAreas.join(", ")}
+            `.trim();
 
-Full Text:
-${extractedData.fullText}
-      `.trim();
+      // Simple but effective chunking strategy for legislative text
+      const chunkBillText = (fullText: string, chunkSize: number = 2000, overlap: number = 200): string[] => {
+        // If text is small enough, return as single chunk
+        if (fullText.length <= chunkSize) {
+          return [fullText];
+        }
 
-      // Add the bill content to RAG for search
+        const chunks: string[] = [];
+        let start = 0;
+
+        while (start < fullText.length) {
+          let end = Math.min(start + chunkSize, fullText.length);
+          
+          // Try to break at a natural boundary (paragraph, sentence, or section)
+          if (end < fullText.length) {
+            // Look for section boundaries first (common in bills)
+            const sectionBreak = fullText.lastIndexOf('\n\nSEC.', end);
+            const paragraphBreak = fullText.lastIndexOf('\n\n', end);
+            const sentenceBreak = fullText.lastIndexOf('. ', end);
+            
+            if (sectionBreak > start + chunkSize * 0.7) {
+              end = sectionBreak + 2; // Include the newlines
+            } else if (paragraphBreak > start + chunkSize * 0.7) {
+              end = paragraphBreak + 2;
+            } else if (sentenceBreak > start + chunkSize * 0.5) {
+              end = sentenceBreak + 2;
+            }
+          }
+
+          const chunk = fullText.slice(start, end).trim();
+          if (chunk.length > 0) {
+            chunks.push(chunk);
+          }
+
+          // Move start forward, accounting for overlap
+          start = Math.max(start + chunkSize - overlap, end);
+        }
+
+        return chunks;
+      };
+
+      // Chunk the full text
+      const textChunks = chunkBillText(extractedData.fullText);
+      
+      // Create final chunks with metadata prepended to each text chunk
+      const finalChunks = textChunks.map((chunk, index) => {
+        return `${metadataContent}
+
+--- Bill Text (Part ${index + 1}/${textChunks.length}) ---
+${chunk}`;
+      });
+
+      console.log(`Chunked bill ${billIdentifier} into ${finalChunks.length} chunks`);
+
+      // Add the chunked content to RAG
       const { entryId } = await rag.add(ctx, {
         namespace: "bills", // Global namespace for all bills
         key: billIdentifier, // Unique key for this bill
-        text: contentToVectorize,
+        chunks: finalChunks, // Use chunked content instead of single text
+        title: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber}: ${extractedData.cleanedShortTitle || extractedData.officialTitle}`,
         // Store metadata for filtering
         filterValues: [
+          { name: "billIdentifier", value: billIdentifier }, // Add unique identifier for precise filtering
           { name: "billType", value: extractedData.billType },
           { name: "congress", value: extractedData.congress.toString() },
           { name: "sponsor", value: extractedData.sponsor.name },
@@ -499,7 +550,6 @@ export const storeBillData = internalMutation({
     summary: v.string(),
     tagLine: v.string(),
     impactAreas: v.array(v.string()),
-    ragId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -542,11 +592,10 @@ export const storeBillData = internalMutation({
         committees: args.committees,
         latestVersionCode: args.versionCode,
         latestActionDate: args.actionDate,
-        status: "Introduced", // You can enhance this based on version codes
+        status: getBillStatusFromVersionCode(args.versionCode),
         summary: args.summary,
         tagline: args.tagLine,
         impactAreas: args.impactAreas,
-        ragId: args.ragId,
       });
       billId = existingBill._id;
     } else {
@@ -561,11 +610,10 @@ export const storeBillData = internalMutation({
         committees: args.committees,
         latestVersionCode: args.versionCode,
         latestActionDate: args.actionDate,
-        status: "Introduced",
+        status: getBillStatusFromVersionCode(args.versionCode),
         summary: args.summary,
         tagline: args.tagLine,
         impactAreas: args.impactAreas,
-        ragId: args.ragId,
       });
     }
 
@@ -604,7 +652,7 @@ export const upsertPolitician = internalMutation({
     // Check if politician already exists by govinfoId
     const existing = await ctx.db
       .query("politicians")
-      .filter((q) => q.eq(q.field("govinfoId"), args.govinfoId))
+      .withIndex("by_govinfoId", (q) => q.eq("govinfoId", args.govinfoId))
       .first();
 
     if (existing) {
