@@ -9,16 +9,6 @@ import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 import { BillSearchResult, BillSearchResponse } from "../types";
 
-/*
-  Refined UI/UX:
-  - Search-first hero: large, focused input with prominent dropdown results
-  - Clean header: glass, subtle border, better mobile menu affordances
-  - Responsive spacing scale: tighter on mobile, generous on desktop
-  - Polished cards: reduced visual noise, sharper contrast, tasteful motion
-  - Accessibility: focus-visible states, kbd hint, aria labels
-  - Performance: debounced search with skeletons and empty states
-*/
-
 interface Bill {
   _id: Id<"bills">;
   congress: number;
@@ -39,39 +29,240 @@ interface Bill {
 
 /* ---------- Impact Colors ---------- */
 
-const IMPACT_COLORS: Record<string, { light: string; dark: string; textLight: string; textDark: string; borderLight: string; borderDark: string }> = {
-  Agriculture: { light: "bg-lime-100/70", dark: "bg-lime-400/10", textLight: "text-lime-900", textDark: "text-lime-300", borderLight: "border-lime-200", borderDark: "border-lime-300/20" },
-  "Armed Forces": { light: "bg-slate-100/70", dark: "bg-slate-400/10", textLight: "text-slate-900", textDark: "text-slate-300", borderLight: "border-slate-200", borderDark: "border-slate-300/20" },
-  "Civil Rights": { light: "bg-rose-100/70", dark: "bg-rose-400/10", textLight: "text-rose-900", textDark: "text-rose-300", borderLight: "border-rose-200", borderDark: "border-rose-300/20" },
-  Commerce: { light: "bg-amber-100/70", dark: "bg-amber-400/10", textLight: "text-amber-900", textDark: "text-amber-300", borderLight: "border-amber-200", borderDark: "border-amber-300/20" },
-  Crime: { light: "bg-rose-100/70", dark: "bg-rose-400/10", textLight: "text-rose-900", textDark: "text-rose-300", borderLight: "border-rose-200", borderDark: "border-rose-300/20" },
-  Economics: { light: "bg-emerald-100/70", dark: "bg-emerald-400/10", textLight: "text-emerald-900", textDark: "text-emerald-300", borderLight: "border-emerald-200", borderDark: "border-emerald-300/20" },
-  Education: { light: "bg-sky-100/70", dark: "bg-sky-400/10", textLight: "text-sky-900", textDark: "text-sky-300", borderLight: "border-sky-200", borderDark: "border-sky-300/20" },
-  Energy: { light: "bg-orange-100/70", dark: "bg-orange-400/10", textLight: "text-orange-900", textDark: "text-orange-300", borderLight: "border-orange-200", borderDark: "border-orange-300/20" },
-  Environment: { light: "bg-emerald-100/70", dark: "bg-emerald-400/10", textLight: "text-emerald-900", textDark: "text-emerald-300", borderLight: "border-emerald-200", borderDark: "border-emerald-300/20" },
-  Finance: { light: "bg-indigo-100/70", dark: "bg-indigo-400/10", textLight: "text-indigo-900", textDark: "text-indigo-300", borderLight: "border-indigo-200", borderDark: "border-indigo-300/20" },
-  "Government Operations": { light: "bg-violet-100/70", dark: "bg-violet-400/10", textLight: "text-violet-900", textDark: "text-violet-300", borderLight: "border-violet-200", borderDark: "border-violet-300/20" },
-  Health: { light: "bg-red-100/70", dark: "bg-red-400/10", textLight: "text-red-900", textDark: "text-red-300", borderLight: "border-red-200", borderDark: "border-red-300/20" },
-  Housing: { light: "bg-fuchsia-100/70", dark: "bg-fuchsia-400/10", textLight: "text-fuchsia-900", textDark: "text-fuchsia-300", borderLight: "border-fuchsia-200", borderDark: "border-fuchsia-300/20" },
-  Immigration: { light: "bg-teal-100/70", dark: "bg-teal-400/10", textLight: "text-teal-900", textDark: "text-teal-300", borderLight: "border-teal-200", borderDark: "border-teal-300/20" },
-  "International Affairs": { light: "bg-cyan-100/70", dark: "bg-cyan-400/10", textLight: "text-cyan-900", textDark: "text-cyan-300", borderLight: "border-cyan-200", borderDark: "border-cyan-300/20" },
-  Labor: { light: "bg-yellow-100/70", dark: "bg-yellow-400/10", textLight: "text-yellow-900", textDark: "text-yellow-300", borderLight: "border-yellow-200", borderDark: "border-yellow-300/20" },
-  Law: { light: "bg-stone-100/70", dark: "bg-stone-400/10", textLight: "text-stone-900", textDark: "text-stone-300", borderLight: "border-stone-200", borderDark: "border-stone-300/20" },
-  "Native Americans": { light: "bg-amber-100/70", dark: "bg-amber-400/10", textLight: "text-amber-900", textDark: "text-amber-300", borderLight: "border-amber-200", borderDark: "border-amber-300/20" },
-  "Public Lands": { light: "bg-green-100/70", dark: "bg-green-400/10", textLight: "text-green-900", textDark: "text-green-300", borderLight: "border-green-200", borderDark: "border-green-300/20" },
-  Science: { light: "bg-purple-100/70", dark: "bg-purple-400/10", textLight: "text-purple-900", textDark: "text-purple-300", borderLight: "border-purple-200", borderDark: "border-purple-300/20" },
-  "Social Issues": { light: "bg-pink-100/70", dark: "bg-pink-400/10", textLight: "text-pink-900", textDark: "text-pink-300", borderLight: "border-pink-200", borderDark: "border-pink-300/20" },
-  "Social Security": { light: "bg-blue-100/70", dark: "bg-blue-400/10", textLight: "text-blue-900", textDark: "text-blue-300", borderLight: "border-blue-200", borderDark: "border-blue-300/20" },
-  Sports: { light: "bg-emerald-100/70", dark: "bg-emerald-400/10", textLight: "text-emerald-900", textDark: "text-emerald-300", borderLight: "border-emerald-200", borderDark: "border-emerald-300/20" },
-  Taxation: { light: "bg-orange-100/70", dark: "bg-orange-400/10", textLight: "text-orange-900", textDark: "text-orange-300", borderLight: "border-orange-200", borderDark: "border-orange-300/20" },
-  Technology: { light: "bg-cyan-100/70", dark: "bg-cyan-400/10", textLight: "text-cyan-900", textDark: "text-cyan-300", borderLight: "border-cyan-200", borderDark: "border-cyan-300/20" },
-  Transportation: { light: "bg-indigo-100/70", dark: "bg-indigo-400/10", textLight: "text-indigo-900", textDark: "text-indigo-300", borderLight: "border-indigo-200", borderDark: "border-indigo-300/20" },
-  "Water Resources": { light: "bg-sky-100/70", dark: "bg-sky-400/10", textLight: "text-sky-900", textDark: "text-sky-300", borderLight: "border-sky-200", borderDark: "border-sky-300/20" },
+const IMPACT_COLORS: Record<
+  string,
+  {
+    light: string;
+    dark: string;
+    textLight: string;
+    textDark: string;
+    borderLight: string;
+    borderDark: string;
+  }
+> = {
+  Agriculture: {
+    light: "bg-lime-100/70",
+    dark: "bg-lime-400/10",
+    textLight: "text-lime-900",
+    textDark: "text-lime-300",
+    borderLight: "border-lime-200",
+    borderDark: "border-lime-300/20",
+  },
+  "Armed Forces": {
+    light: "bg-slate-100/70",
+    dark: "bg-slate-400/10",
+    textLight: "text-slate-900",
+    textDark: "text-slate-300",
+    borderLight: "border-slate-200",
+    borderDark: "border-slate-300/20",
+  },
+  "Civil Rights": {
+    light: "bg-rose-100/70",
+    dark: "bg-rose-400/10",
+    textLight: "text-rose-900",
+    textDark: "text-rose-300",
+    borderLight: "border-rose-200",
+    borderDark: "border-rose-300/20",
+  },
+  Commerce: {
+    light: "bg-amber-100/70",
+    dark: "bg-amber-400/10",
+    textLight: "text-amber-900",
+    textDark: "text-amber-300",
+    borderLight: "border-amber-200",
+    borderDark: "border-amber-300/20",
+  },
+  Crime: {
+    light: "bg-rose-100/70",
+    dark: "bg-rose-400/10",
+    textLight: "text-rose-900",
+    textDark: "text-rose-300",
+    borderLight: "border-rose-200",
+    borderDark: "border-rose-300/20",
+  },
+  Economics: {
+    light: "bg-emerald-100/70",
+    dark: "bg-emerald-400/10",
+    textLight: "text-emerald-900",
+    textDark: "text-emerald-300",
+    borderLight: "border-emerald-200",
+    borderDark: "border-emerald-300/20",
+  },
+  Education: {
+    light: "bg-sky-100/70",
+    dark: "bg-sky-400/10",
+    textLight: "text-sky-900",
+    textDark: "text-sky-300",
+    borderLight: "border-sky-200",
+    borderDark: "border-sky-300/20",
+  },
+  Energy: {
+    light: "bg-orange-100/70",
+    dark: "bg-orange-400/10",
+    textLight: "text-orange-900",
+    textDark: "text-orange-300",
+    borderLight: "border-orange-200",
+    borderDark: "border-orange-300/20",
+  },
+  Environment: {
+    light: "bg-emerald-100/70",
+    dark: "bg-emerald-400/10",
+    textLight: "text-emerald-900",
+    textDark: "text-emerald-300",
+    borderLight: "border-emerald-200",
+    borderDark: "border-emerald-300/20",
+  },
+  Finance: {
+    light: "bg-indigo-100/70",
+    dark: "bg-indigo-400/10",
+    textLight: "text-indigo-900",
+    textDark: "text-indigo-300",
+    borderLight: "border-indigo-200",
+    borderDark: "border-indigo-300/20",
+  },
+  "Government Operations": {
+    light: "bg-violet-100/70",
+    dark: "bg-violet-400/10",
+    textLight: "text-violet-900",
+    textDark: "text-violet-300",
+    borderLight: "border-violet-200",
+    borderDark: "border-violet-300/20",
+  },
+  Health: {
+    light: "bg-red-100/70",
+    dark: "bg-red-400/10",
+    textLight: "text-red-900",
+    textDark: "text-red-300",
+    borderLight: "border-red-200",
+    borderDark: "border-red-300/20",
+  },
+  Housing: {
+    light: "bg-fuchsia-100/70",
+    dark: "bg-fuchsia-400/10",
+    textLight: "text-fuchsia-900",
+    textDark: "text-fuchsia-300",
+    borderLight: "border-fuchsia-200",
+    borderDark: "border-fuchsia-300/20",
+  },
+  Immigration: {
+    light: "bg-teal-100/70",
+    dark: "bg-teal-400/10",
+    textLight: "text-teal-900",
+    textDark: "text-teal-300",
+    borderLight: "border-teal-200",
+    borderDark: "border-teal-300/20",
+  },
+  "International Affairs": {
+    light: "bg-cyan-100/70",
+    dark: "bg-cyan-400/10",
+    textLight: "text-cyan-900",
+    textDark: "text-cyan-300",
+    borderLight: "border-cyan-200",
+    borderDark: "border-cyan-300/20",
+  },
+  Labor: {
+    light: "bg-yellow-100/70",
+    dark: "bg-yellow-400/10",
+    textLight: "text-yellow-900",
+    textDark: "text-yellow-300",
+    borderLight: "border-yellow-200",
+    borderDark: "border-yellow-300/20",
+  },
+  Law: {
+    light: "bg-stone-100/70",
+    dark: "bg-stone-400/10",
+    textLight: "text-stone-900",
+    textDark: "text-stone-300",
+    borderLight: "border-stone-200",
+    borderDark: "border-stone-300/20",
+  },
+  "Native Americans": {
+    light: "bg-amber-100/70",
+    dark: "bg-amber-400/10",
+    textLight: "text-amber-900",
+    textDark: "text-amber-300",
+    borderLight: "border-amber-200",
+    borderDark: "border-amber-300/20",
+  },
+  "Public Lands": {
+    light: "bg-green-100/70",
+    dark: "bg-green-400/10",
+    textLight: "text-green-900",
+    textDark: "text-green-300",
+    borderLight: "border-green-200",
+    borderDark: "border-green-300/20",
+  },
+  Science: {
+    light: "bg-purple-100/70",
+    dark: "bg-purple-400/10",
+    textLight: "text-purple-900",
+    textDark: "text-purple-300",
+    borderLight: "border-purple-200",
+    borderDark: "border-purple-300/20",
+  },
+  "Social Issues": {
+    light: "bg-pink-100/70",
+    dark: "bg-pink-400/10",
+    textLight: "text-pink-900",
+    textDark: "text-pink-300",
+    borderLight: "border-pink-200",
+    borderDark: "border-pink-300/20",
+  },
+  "Social Security": {
+    light: "bg-blue-100/70",
+    dark: "bg-blue-400/10",
+    textLight: "text-blue-900",
+    textDark: "text-blue-300",
+    borderLight: "border-blue-200",
+    borderDark: "border-blue-300/20",
+  },
+  Sports: {
+    light: "bg-emerald-100/70",
+    dark: "bg-emerald-400/10",
+    textLight: "text-emerald-900",
+    textDark: "text-emerald-300",
+    borderLight: "border-emerald-200",
+    borderDark: "border-emerald-300/20",
+  },
+  Taxation: {
+    light: "bg-orange-100/70",
+    dark: "bg-orange-400/10",
+    textLight: "text-orange-900",
+    textDark: "text-orange-300",
+    borderLight: "border-orange-200",
+    borderDark: "border-orange-300/20",
+  },
+  Technology: {
+    light: "bg-cyan-100/70",
+    dark: "bg-cyan-400/10",
+    textLight: "text-cyan-900",
+    textDark: "text-cyan-300",
+    borderLight: "border-cyan-200",
+    borderDark: "border-cyan-300/20",
+  },
+  Transportation: {
+    light: "bg-indigo-100/70",
+    dark: "bg-indigo-400/10",
+    textLight: "text-indigo-900",
+    textDark: "text-indigo-300",
+    borderLight: "border-indigo-200",
+    borderDark: "border-indigo-300/20",
+  },
+  "Water Resources": {
+    light: "bg-sky-100/70",
+    dark: "bg-sky-400/10",
+    textLight: "text-sky-900",
+    textDark: "text-sky-300",
+    borderLight: "border-sky-200",
+    borderDark: "border-sky-300/20",
+  },
 };
+
+/* ---------- Page ---------- */
 
 export default function Homepage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[hsl(230_60%_99%)] via-[hsl(230_50%_98%)] to-[hsl(230_40%_96%)] dark:from-[hsl(220_30%_12%)] dark:via-[hsl(220_28%_10%)] dark:to-[hsl(220_26%_8%)] overflow-x-hidden">
+    <main className="min-h-screen bg-[linear-gradient(180deg,hsl(230_60%_99%),hsl(230_52%_98%)_30%,hsl(230_46%_97%))] dark:bg-[linear-gradient(180deg,hsl(220_30%_12%),hsl(220_28%_10%)_35%,hsl(220_26%_9%))] overflow-x-hidden">
       <Header />
       <HeroSection />
       <LatestBillsSection />
@@ -104,10 +295,10 @@ function IconButton({
       title={title}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center justify-center rounded-lg p-2 text-[hsl(230_12%_52%)]",
-        "hover:text-[hsl(230_16%_20%)] dark:hover:text-[hsl(220_10%_92%)]",
+        "inline-flex items-center justify-center rounded-xl p-2.5 text-[hsl(230_12%_52%)]",
+        "hover:text-[hsl(230_16%_20%)] dark:hover:text-[hsl(220_10%_94%)]",
         "hover:bg-[hsl(230_10%_94%)]/70 dark:hover:bg-white/5",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-transparent",
         "transition-colors",
         className
       )}
@@ -127,7 +318,6 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 function ImpactChip({ label }: { label: string }) {
-  console.log(label);
   const c = IMPACT_COLORS[label] ?? {
     light: "bg-[hsl(233_85%_60%)]/12",
     dark: "bg-white/[0.08]",
@@ -136,13 +326,17 @@ function ImpactChip({ label }: { label: string }) {
     borderLight: "border-black/5",
     borderDark: "border-white/10",
   };
-  console.log(c);
+
   return (
     <span
       className={cn(
         "text-[10px] px-2 py-0.5 rounded-full border",
-        c.light, c.textLight, c.borderLight,
-        "dark:" + c.dark, "dark:" + c.textDark, "dark:" + c.borderDark
+        c.light,
+        c.textLight,
+        c.borderLight,
+        "dark:" + c.dark,
+        "dark:" + c.textDark,
+        "dark:" + c.borderDark
       )}
     >
       {label}
@@ -194,7 +388,7 @@ function Header() {
         "sticky top-0 z-50 border-b border-transparent transition-all",
         "supports-[backdrop-filter]:backdrop-blur-xl",
         scrolled
-          ? "bg-white/75 dark:bg-[hsl(220_28%_10%)]/75 border-[hsl(230_16%_90%)]/70 dark:border-white/10 shadow-sm"
+          ? "bg-white/80 dark:bg-[hsl(220_28%_10%)]/80 border-[hsl(230_16%_90%)]/70 dark:border-white/10 shadow-sm"
           : "bg-white/40 dark:bg-[hsl(220_28%_10%)]/40"
       )}
     >
@@ -202,7 +396,7 @@ function Header() {
         <div className="flex justify-between items-center h-16">
           <Link
             href="/"
-            className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50 rounded-md"
+            className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 rounded-md"
           >
             <div className="relative">
               <span className="absolute inset-0 blur-xl bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))] opacity-40 rounded-full" />
@@ -227,7 +421,7 @@ function Header() {
                   "text-sm px-3 py-2 rounded-lg",
                   "text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_72%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white",
                   "hover:bg-[hsl(230_10%_94%)]/70 dark:hover:bg-white/5",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50"
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
                 )}
               >
                 Sign Out
@@ -240,7 +434,7 @@ function Header() {
                     "text-sm px-3 py-2 rounded-lg",
                     "text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_72%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white",
                     "hover:bg-[hsl(230_10%_94%)]/70 dark:hover:bg-white/5",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50"
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
                   )}
                 >
                   Sign In
@@ -250,8 +444,8 @@ function Header() {
                   className={cn(
                     "rounded-lg px-4 py-2 text-sm font-semibold text-white",
                     "bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]",
-                    "shadow-[0_10px_20px_-10px_rgba(66,99,235,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(66,99,235,0.6)]",
-                    "transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50"
+                    "shadow-[0_10px_20px_-10px_rgba(66,99,235,0.5)] hover:shadow-[0_16px_32px_-12px_rgba(66,99,235,0.6)]",
+                    "transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
                   )}
                 >
                   Get Started
@@ -276,13 +470,13 @@ function Header() {
         {open && (
           <div className="md:hidden pb-4 space-y-2">
             <div className="flex flex-col space-y-2">
-              <Link href="#bills" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+              <Link href="#bills" onClick={() => setOpen(false)} className="px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                 Bills
               </Link>
-              <Link href="#politicians" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+              <Link href="#politicians" onClick={() => setOpen(false)} className="px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                 Politicians
               </Link>
-              <Link href="#about" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+              <Link href="#about" onClick={() => setOpen(false)} className="px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                 About
               </Link>
             </div>
@@ -318,45 +512,44 @@ function Header() {
 /* ---------- Hero (Search-first) ---------- */
 
 function HeroSection() {
+  // Added a subtle texture layer + larger top/bottom space for prime focus.
   return (
-    <section className="relative pt-16 md:pt-20 pb-10 md:pb-16 px-4 sm:px-6 lg:px-8">
-      {/* Vibes: gradient ring + soft glows - constrain these individually */}
-      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl bg-[hsl(233_85%_60%)]/25 overflow-hidden" />
-      {/* <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full blur-3xl bg-[hsl(43_74%_52%)]/20" /> */}
-      <div aria-hidden className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_5%,black,transparent)] overflow-hidden">
+    <section className="relative pt-16 md:pt-20 pb-8 md:pb-12 px-4 sm:px-6 lg:px-8">
+      <div aria-hidden className="pointer-events-none absolute -top-40 -left-24 h-[28rem] w-[28rem] rounded-full blur-3xl bg-[hsl(233_85%_60%)]/25" />
+      <div aria-hidden className="pointer-events-none absolute -top-16 right-0 h-[22rem] w-[22rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/18" />
+      <div aria-hidden className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_5%,black,transparent)]">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(233_85%_60%)]/40 to-transparent" />
       </div>
 
-      <div className="max-w-5xl mx-auto text-center relative">
-        <span className="inline-flex items-center gap-2 text-xs md:text-sm font-medium rounded-full px-3 py-1 bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
+      <div className="max-w-6xl mx-auto text-center relative">
+        <span className="inline-flex items-center gap-2 text-xs md:text-sm font-medium rounded-full px-3 py-1 bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
           <span className="inline-block h-2 w-2 rounded-full bg-[hsl(233_85%_60%)] animate-pulse" />
           Live legislative insights updated daily
         </span>
 
-        <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight tracking-tight">
+        <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-[1.05] tracking-tight">
           <span className="bg-clip-text text-transparent bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]">
             Understand Congress,
           </span>{" "}
           instantly.
         </h1>
 
-        <p className="mt-4 md:mt-5 text-base md:text-xl text-[hsl(230_12%_36%)]/85 dark:text-[hsl(220_12%_78%)]/85 max-w-3xl mx-auto">
+        <p className="mt-4 md:mt-5 text-base md:text-xl text-[hsl(230_12%_30%)]/85 dark:text-[hsl(220_12%_78%)]/85 max-w-3xl mx-auto">
           Search thousands of bills with natural language. See summaries, sponsors, status, and impact—fast.
         </p>
 
-        {/* The main star: search box with dropdown */}
         <div className="mt-8 md:mt-10">
           <HeroSearch />
         </div>
 
-        <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
+        <div className="mt-6 md:mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
           <Link
             href="#bills"
             className={cn(
               "rounded-xl px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white",
               "bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(256_85%_60%))]",
-              "shadow-[0_12px_30px_-15px_rgba(66,99,235,0.55)] hover:shadow-[0_18px_40px_-15px_rgba(66,99,235,0.65)]",
-              "transition-[box-shadow,transform] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50"
+              "shadow-[0_16px_40px_-20px_rgba(66,99,235,0.55)] hover:shadow-[0_22px_52px_-20px_rgba(66,99,235,0.65)]",
+              "transition-[box-shadow,transform] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
             )}
           >
             Browse Latest Bills
@@ -379,7 +572,7 @@ function SearchResultCard({ result, onClick }: { result: BillSearchResult; onCli
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-4 rounded-xl transition-colors border border-black/5 dark:border-white/10 hover:border-[hsl(233_85%_60%)]/30 hover:bg-white/80 dark:hover:bg-white/[0.08]"
+      className="w-full text-left p-4 rounded-xl transition-colors border border-black/5 dark:border-white/10 hover:border-[hsl(233_85%_60%)]/35 hover:bg-white dark:hover:bg-white/[0.06] bg-white/80 dark:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
     >
       <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex-1 min-w-0">
@@ -514,11 +707,12 @@ function HeroSearch() {
 
   return (
     <div className="relative max-w-3xl mx-auto">
+      {/* Search card */}
       <div
         className={cn(
           "relative rounded-2xl p-3 md:p-4",
-          "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-          "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+          "bg-white/85 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+          "shadow-[0_18px_44px_-24px_rgba(0,0,0,0.35)] backdrop-blur-xl"
         )}
       >
         <label htmlFor="main-search" className="sr-only">
@@ -530,7 +724,13 @@ function HeroSearch() {
             {isSearching ? (
               <div className="animate-spin h-5 w-5 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
             ) : (
-              <svg className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <svg
+                className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             )}
@@ -544,9 +744,9 @@ function HeroSearch() {
             className={cn(
               "w-full rounded-xl border-2 border-transparent bg-transparent",
               "pl-12 pr-28 py-3.5 md:py-4 text-base md:text-lg",
-              "placeholder:text-[hsl(230_12%_60%)]/80 dark:placeholder:text-[hsl(220_12%_78%)]/70",
-              "text-[hsl(230_16%_20%)] dark:text-[hsl(220_12%_92%)]",
-              "focus:outline-none focus:border-[hsl(233_85%_60%)]/60"
+              "placeholder:text-[hsl(230_12%_55%)]/85 dark:placeholder:text-[hsl(220_12%_78%)]/70",
+              "text-[hsl(230_16%_16%)] dark:text-[hsl(220_12%_94%)]",
+              "focus:outline-none focus:border-[hsl(233_85%_60%)]/70"
             )}
             placeholder={placeholders[placeholderIndex]}
             autoComplete="off"
@@ -560,7 +760,7 @@ function HeroSearch() {
                 setShowDropdown(false);
                 setSearchResults(null);
               }}
-              className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white"
+              className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white focus:outline-none"
               aria-label="Clear search"
               title="Clear"
             >
@@ -568,17 +768,17 @@ function HeroSearch() {
             </button>
           )}
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
+            <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
               ⌘K
             </kbd>
           </div>
         </div>
       </div>
 
-      {/* Dropdown results - full width of search card */}
+      {/* Dropdown results */}
       {showDropdown && (
         <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-50 max-w-full">
-          <div className="rounded-2xl p-3 md:p-4 bg-white/90 dark:bg-white/[0.08] border border-black/5 dark:border-white/10 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <div className="rounded-2xl p-3 md:p-4 bg-white dark:bg-[hsl(220_28%_12%)]/95 border border-black/5 dark:border-white/10 shadow-[0_28px_64px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl">
             {isSearching && (
               <div className="p-4 flex items-center gap-3 text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/85">
                 <div className="animate-spin h-4 w-4 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
@@ -597,10 +797,10 @@ function HeroSearch() {
               </div>
             )}
 
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               {!isSearching && (!searchResults || searchResults.results.length === 0) && (
-                <div className="p-6 text-center text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
-                  No results yet. Try searching for &ldquo;farm bill subsidies&rdquo; or &ldquo;student loan forgiveness&rdquo;.
+                <div className="p-8 text-center text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+                  No results yet. Try “farm bill subsidies” or “student loan forgiveness”.
                 </div>
               )}
 
@@ -628,15 +828,11 @@ function LatestBillsSection() {
 
     const scrollLeft = container.scrollLeft;
     const totalWidth = container.scrollWidth - container.clientWidth;
-    
     if (totalWidth <= 0) return;
 
-    // Estimate card width based on actual bills length
     const cardWidthEstimate = container.scrollWidth / bills.length;
-    
     const centerScrollPosition = scrollLeft + container.clientWidth / 2;
     let newIndex = Math.floor(centerScrollPosition / cardWidthEstimate);
-
     newIndex = Math.max(0, Math.min(bills.length - 1, newIndex));
 
     if (newIndex !== selectedIndex) {
@@ -645,7 +841,7 @@ function LatestBillsSection() {
   };
 
   return (
-    <section id="bills" className="relative py-14 md:py-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section id="bills" className="relative py-16 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-[50rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/12" />
       </div>
@@ -663,12 +859,9 @@ function LatestBillsSection() {
         {bills === undefined ? (
           <>
             {/* Mobile Loading Skeleton */}
-            <div className="md:hidden flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4 scrollbar-hide">
+            <div className="md:hidden flex overflow-x-auto space-x-4 pb-2 -mx-4 px-4 scrollbar-hide">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="min-w-[280px] w-[85vw] max-w-[340px] flex-shrink-0"
-                >
+                <div key={i} className="min-w-[280px] w-[85vw] max-w-[340px] flex-shrink-0">
                   <div
                     className={cn(
                       "rounded-2xl p-6 h-full",
@@ -684,7 +877,7 @@ function LatestBillsSection() {
                 </div>
               ))}
             </div>
-            
+
             {/* Desktop Loading Skeleton */}
             <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -713,16 +906,13 @@ function LatestBillsSection() {
         ) : (
           <>
             {/* Mobile: Horizontal Scrollable */}
-            <div 
+            <div
               ref={scrollContainerRef}
-              className="md:hidden flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide"
+              className="md:hidden flex overflow-x-auto space-x-4 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide"
               onScroll={handleScroll}
             >
               {bills.map((bill) => (
-                <div 
-                  key={bill._id} 
-                  className="min-w-[280px] w-[85vw] max-w-[340px] snap-center flex-shrink-0"
-                >
+                <div key={bill._id} className="min-w-[280px] w-[85vw] max-w-[340px] snap-center flex-shrink-0">
                   <BillCard bill={bill} />
                 </div>
               ))}
@@ -733,13 +923,11 @@ function LatestBillsSection() {
               <div className="md:hidden flex justify-center mt-6">
                 <div className="flex space-x-2">
                   {bills.map((_, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={cn(
                         "transition-all duration-300 rounded-full",
-                        selectedIndex === index 
-                          ? "w-8 h-2 bg-[hsl(233_85%_60%)]" 
-                          : "w-2 h-2 bg-[hsl(233_85%_60%)]/40"
+                        selectedIndex === index ? "w-8 h-2 bg-[hsl(233_85%_60%)]" : "w-2 h-2 bg-[hsl(233_85%_60%)]/40"
                       )}
                     />
                   ))}
@@ -799,7 +987,7 @@ function BillCard({ bill }: { bill: Bill }) {
       className={cn(
         "group rounded-2xl p-6 h-full flex flex-col",
         "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-        "hover:border-[hsl(233_85%_60%)]/40 hover:shadow-[0_20px_50px_-25px_rgba(66,99,235,0.35)]",
+        "hover:border-[hsl(233_85%_60%)]/40 hover:shadow-[0_24px_60px_-28px_rgba(66,99,235,0.35)]",
         "transition-all"
       )}
     >
@@ -849,9 +1037,7 @@ function BillCard({ bill }: { bill: Bill }) {
             <ImpactChip key={i} label={area} />
           ))}
           {bill.impactAreas.length > 3 && (
-            <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
-              +{bill.impactAreas.length - 3} more
-            </span>
+            <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">+{bill.impactAreas.length - 3} more</span>
           )}
         </div>
       )}
@@ -881,7 +1067,7 @@ function BillCard({ bill }: { bill: Bill }) {
         </div>
         <Link
           href={`/bills/${bill._id}`}
-          className="text-[hsl(233_85%_55%)] hover:text-[hsl(233_85%_60%)] dark:text-[hsl(233_85%_65%)] dark:hover:text-[hsl(233_85%_75%)] transition-colors text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50 rounded px-1"
+          className="text-[hsl(233_85%_55%)] hover:text-[hsl(233_85%_60%)] dark:text-[hsl(233_85%_65%)] dark:hover:text-[hsl(233_85%_75%)] transition-colors text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 rounded px-1"
         >
           Read More →
         </Link>
@@ -914,20 +1100,52 @@ function Footer() {
           <div>
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
-              <li><Link href="#bills" className="hover:text-[hsl(233_85%_60%)] transition-colors">Bills</Link></li>
-              <li><Link href="#politicians" className="hover:text-[hsl(233_85%_60%)] transition-colors">Politicians</Link></li>
-              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Search</a></li>
-              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">API</a></li>
+              <li>
+                <Link href="#bills" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  Bills
+                </Link>
+              </li>
+              <li>
+                <Link href="#politicians" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  Politicians
+                </Link>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  Search
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  API
+                </a>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
-              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">About</a></li>
-              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Privacy</a></li>
-              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Terms</a></li>
-              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Contact</a></li>
+              <li>
+                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  About
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  Terms
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                  Contact
+                </a>
+              </li>
             </ul>
           </div>
         </div>

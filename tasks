@@ -6,4 +6,9 @@ render bills
 
 //group results
 //improve ui
+
+hero section bigger less padding on top of 'latest bills'
+header update - no hamburger, no scroll buttons only links
+browse latest bills -> browse all bills
+typewriter
 update globals css with new colors etc
