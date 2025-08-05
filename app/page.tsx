@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useConvexAuth, useQuery, useAction } from "convex/react";
@@ -11,15 +10,13 @@ import { Id } from "../convex/_generated/dataModel";
 import { BillSearchResult, BillSearchResponse } from "../types";
 
 /*
-  Beautiful, opinionated redesign:
-  - Elevated brand with gradient surfaces, glass morphism, and soft shadows
-  - Rich typography hierarchy with Lora headings & Inter body
-  - Polished header with glass, active states, and mobile menu
-  - Hero: layered gradient, glow rings, CTA duo, subtle animated dots
-  - Search: spotlight card, command-hint, dynamic dropdown, clear button
-  - Latest Bills: luxe cards, status badge with icons, content density, hover lift
-  - Footer: gradient top border, tighter rhythm, refined colors
-  - Accessibility: focus-visible rings, icon labels, time elements, ARIA
+  Refined UI/UX:
+  - Search-first hero: large, focused input with prominent dropdown results
+  - Clean header: glass, subtle border, better mobile menu affordances
+  - Responsive spacing scale: tighter on mobile, generous on desktop
+  - Polished cards: reduced visual noise, sharper contrast, tasteful motion
+  - Accessibility: focus-visible states, kbd hint, aria labels
+  - Performance: debounced search with skeletons and empty states
 */
 
 interface Bill {
@@ -40,12 +37,43 @@ interface Bill {
   };
 }
 
+/* ---------- Impact Colors ---------- */
+
+const IMPACT_COLORS: Record<string, { light: string; dark: string; textLight: string; textDark: string; borderLight: string; borderDark: string }> = {
+  Agriculture: { light: "bg-lime-100/70", dark: "bg-lime-400/10", textLight: "text-lime-900", textDark: "text-lime-300", borderLight: "border-lime-200", borderDark: "border-lime-300/20" },
+  "Armed Forces": { light: "bg-slate-100/70", dark: "bg-slate-400/10", textLight: "text-slate-900", textDark: "text-slate-300", borderLight: "border-slate-200", borderDark: "border-slate-300/20" },
+  "Civil Rights": { light: "bg-rose-100/70", dark: "bg-rose-400/10", textLight: "text-rose-900", textDark: "text-rose-300", borderLight: "border-rose-200", borderDark: "border-rose-300/20" },
+  Commerce: { light: "bg-amber-100/70", dark: "bg-amber-400/10", textLight: "text-amber-900", textDark: "text-amber-300", borderLight: "border-amber-200", borderDark: "border-amber-300/20" },
+  Crime: { light: "bg-rose-100/70", dark: "bg-rose-400/10", textLight: "text-rose-900", textDark: "text-rose-300", borderLight: "border-rose-200", borderDark: "border-rose-300/20" },
+  Economics: { light: "bg-emerald-100/70", dark: "bg-emerald-400/10", textLight: "text-emerald-900", textDark: "text-emerald-300", borderLight: "border-emerald-200", borderDark: "border-emerald-300/20" },
+  Education: { light: "bg-sky-100/70", dark: "bg-sky-400/10", textLight: "text-sky-900", textDark: "text-sky-300", borderLight: "border-sky-200", borderDark: "border-sky-300/20" },
+  Energy: { light: "bg-orange-100/70", dark: "bg-orange-400/10", textLight: "text-orange-900", textDark: "text-orange-300", borderLight: "border-orange-200", borderDark: "border-orange-300/20" },
+  Environment: { light: "bg-emerald-100/70", dark: "bg-emerald-400/10", textLight: "text-emerald-900", textDark: "text-emerald-300", borderLight: "border-emerald-200", borderDark: "border-emerald-300/20" },
+  Finance: { light: "bg-indigo-100/70", dark: "bg-indigo-400/10", textLight: "text-indigo-900", textDark: "text-indigo-300", borderLight: "border-indigo-200", borderDark: "border-indigo-300/20" },
+  "Government Operations": { light: "bg-violet-100/70", dark: "bg-violet-400/10", textLight: "text-violet-900", textDark: "text-violet-300", borderLight: "border-violet-200", borderDark: "border-violet-300/20" },
+  Health: { light: "bg-red-100/70", dark: "bg-red-400/10", textLight: "text-red-900", textDark: "text-red-300", borderLight: "border-red-200", borderDark: "border-red-300/20" },
+  Housing: { light: "bg-fuchsia-100/70", dark: "bg-fuchsia-400/10", textLight: "text-fuchsia-900", textDark: "text-fuchsia-300", borderLight: "border-fuchsia-200", borderDark: "border-fuchsia-300/20" },
+  Immigration: { light: "bg-teal-100/70", dark: "bg-teal-400/10", textLight: "text-teal-900", textDark: "text-teal-300", borderLight: "border-teal-200", borderDark: "border-teal-300/20" },
+  "International Affairs": { light: "bg-cyan-100/70", dark: "bg-cyan-400/10", textLight: "text-cyan-900", textDark: "text-cyan-300", borderLight: "border-cyan-200", borderDark: "border-cyan-300/20" },
+  Labor: { light: "bg-yellow-100/70", dark: "bg-yellow-400/10", textLight: "text-yellow-900", textDark: "text-yellow-300", borderLight: "border-yellow-200", borderDark: "border-yellow-300/20" },
+  Law: { light: "bg-stone-100/70", dark: "bg-stone-400/10", textLight: "text-stone-900", textDark: "text-stone-300", borderLight: "border-stone-200", borderDark: "border-stone-300/20" },
+  "Native Americans": { light: "bg-amber-100/70", dark: "bg-amber-400/10", textLight: "text-amber-900", textDark: "text-amber-300", borderLight: "border-amber-200", borderDark: "border-amber-300/20" },
+  "Public Lands": { light: "bg-green-100/70", dark: "bg-green-400/10", textLight: "text-green-900", textDark: "text-green-300", borderLight: "border-green-200", borderDark: "border-green-300/20" },
+  Science: { light: "bg-purple-100/70", dark: "bg-purple-400/10", textLight: "text-purple-900", textDark: "text-purple-300", borderLight: "border-purple-200", borderDark: "border-purple-300/20" },
+  "Social Issues": { light: "bg-pink-100/70", dark: "bg-pink-400/10", textLight: "text-pink-900", textDark: "text-pink-300", borderLight: "border-pink-200", borderDark: "border-pink-300/20" },
+  "Social Security": { light: "bg-blue-100/70", dark: "bg-blue-400/10", textLight: "text-blue-900", textDark: "text-blue-300", borderLight: "border-blue-200", borderDark: "border-blue-300/20" },
+  Sports: { light: "bg-emerald-100/70", dark: "bg-emerald-400/10", textLight: "text-emerald-900", textDark: "text-emerald-300", borderLight: "border-emerald-200", borderDark: "border-emerald-300/20" },
+  Taxation: { light: "bg-orange-100/70", dark: "bg-orange-400/10", textLight: "text-orange-900", textDark: "text-orange-300", borderLight: "border-orange-200", borderDark: "border-orange-300/20" },
+  Technology: { light: "bg-cyan-100/70", dark: "bg-cyan-400/10", textLight: "text-cyan-900", textDark: "text-cyan-300", borderLight: "border-cyan-200", borderDark: "border-cyan-300/20" },
+  Transportation: { light: "bg-indigo-100/70", dark: "bg-indigo-400/10", textLight: "text-indigo-900", textDark: "text-indigo-300", borderLight: "border-indigo-200", borderDark: "border-indigo-300/20" },
+  "Water Resources": { light: "bg-sky-100/70", dark: "bg-sky-400/10", textLight: "text-sky-900", textDark: "text-sky-300", borderLight: "border-sky-200", borderDark: "border-sky-300/20" },
+};
+
 export default function Homepage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[hsl(230_60%_99%)] via-[hsl(230_50%_98%)] to-[hsl(230_40%_96%)] dark:from-[hsl(220_30%_12%)] dark:via-[hsl(220_28%_10%)] dark:to-[hsl(220_26%_8%)]">
+    <main className="min-h-screen bg-gradient-to-b from-[hsl(230_60%_99%)] via-[hsl(230_50%_98%)] to-[hsl(230_40%_96%)] dark:from-[hsl(220_30%_12%)] dark:via-[hsl(220_28%_10%)] dark:to-[hsl(220_26%_8%)] overflow-x-hidden">
       <Header />
       <HeroSection />
-      <SearchSection />
       <LatestBillsSection />
       <Footer />
     </main>
@@ -89,21 +117,37 @@ function IconButton({
   );
 }
 
-// Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
-
   return debouncedValue;
+}
+
+function ImpactChip({ label }: { label: string }) {
+  console.log(label);
+  const c = IMPACT_COLORS[label] ?? {
+    light: "bg-[hsl(233_85%_60%)]/12",
+    dark: "bg-white/[0.08]",
+    textLight: "text-[hsl(233_85%_45%)]",
+    textDark: "text-white/90",
+    borderLight: "border-black/5",
+    borderDark: "border-white/10",
+  };
+  console.log(c);
+  return (
+    <span
+      className={cn(
+        "text-[10px] px-2 py-0.5 rounded-full border",
+        c.light, c.textLight, c.borderLight,
+        "dark:" + c.dark, "dark:" + c.textDark, "dark:" + c.borderDark
+      )}
+    >
+      {label}
+    </span>
+  );
 }
 
 /* ---------- Header ---------- */
@@ -124,7 +168,6 @@ function Header() {
   }, []);
 
   useEffect(() => {
-    // Set initial hash and listen for changes
     const updateHash = () => setActiveHash(window.location.hash);
     updateHash();
     window.addEventListener("hashchange", updateHash);
@@ -171,9 +214,9 @@ function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <NavLink href="#search" label="Search" />
             <NavLink href="#bills" label="Bills" />
             <NavLink href="#politicians" label="Politicians" />
+            <NavLink href="#about" label="About" />
           </nav>
 
           <div className="hidden md:flex items-center space-x-2">
@@ -233,14 +276,14 @@ function Header() {
         {open && (
           <div className="md:hidden pb-4 space-y-2">
             <div className="flex flex-col space-y-2">
-              <Link href="#search" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
-                Search
-              </Link>
               <Link href="#bills" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                 Bills
               </Link>
               <Link href="#politicians" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
                 Politicians
+              </Link>
+              <Link href="#about" onClick={() => setOpen(false)} className="px-2 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                About
               </Link>
             </div>
             <div className="pt-2 border-t border-black/10 dark:border-white/10">
@@ -272,16 +315,15 @@ function Header() {
   );
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero (Search-first) ---------- */
 
 function HeroSection() {
   return (
-    <section className="relative py-24 md:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Glow Orbs */}
-      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl bg-[hsl(233_85%_60%)]/25" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full blur-3xl bg-[hsl(43_74%_52%)]/20" />
-      {/* Gradient ring */}
-      <div aria-hidden className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_10%,black,transparent)]">
+    <section className="relative pt-16 md:pt-20 pb-10 md:pb-16 px-4 sm:px-6 lg:px-8">
+      {/* Vibes: gradient ring + soft glows - constrain these individually */}
+      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl bg-[hsl(233_85%_60%)]/25 overflow-hidden" />
+      {/* <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full blur-3xl bg-[hsl(43_74%_52%)]/20" /> */}
+      <div aria-hidden className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_5%,black,transparent)] overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(233_85%_60%)]/40 to-transparent" />
       </div>
 
@@ -293,32 +335,37 @@ function HeroSection() {
 
         <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight tracking-tight">
           <span className="bg-clip-text text-transparent bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]">
-            Understand Congress
+            Understand Congress,
           </span>{" "}
-          with clarity.
+          instantly.
         </h1>
 
-        <p className="mt-5 md:mt-6 text-lg md:text-2xl text-[hsl(230_12%_36%)]/85 dark:text-[hsl(220_12%_78%)]/85 max-w-3xl mx-auto">
-          Beautiful, credible, and human-friendly bill summaries. Track what matters, follow progress, and engage with confidence.
+        <p className="mt-4 md:mt-5 text-base md:text-xl text-[hsl(230_12%_36%)]/85 dark:text-[hsl(220_12%_78%)]/85 max-w-3xl mx-auto">
+          Search thousands of bills with natural language. See summaries, sponsors, status, and impact—fast.
         </p>
 
-        <div className="mt-8 md:mt-10 flex items-center justify-center gap-3 md:gap-4">
+        {/* The main star: search box with dropdown */}
+        <div className="mt-8 md:mt-10">
+          <HeroSearch />
+        </div>
+
+        <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
           <Link
             href="#bills"
             className={cn(
-              "rounded-xl px-6 md:px-7 py-3 md:py-3.5 text-base md:text-lg font-semibold text-white",
+              "rounded-xl px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white",
               "bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(256_85%_60%))]",
-              "shadow-[0_15px_35px_-15px_rgba(66,99,235,0.6)] hover:shadow-[0_20px_40px_-15px_rgba(66,99,235,0.7)]",
+              "shadow-[0_12px_30px_-15px_rgba(66,99,235,0.55)] hover:shadow-[0_18px_40px_-15px_rgba(66,99,235,0.65)]",
               "transition-[box-shadow,transform] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/50"
             )}
           >
-            Explore Bills
+            Browse Latest Bills
           </Link>
           <Link
-            href="#search"
-            className="rounded-xl px-6 md:px-7 py-3 md:py-3.5 text-base md:text-lg font-semibold bg-white/70 dark:bg-white/[0.06] text-[hsl(230_16%_20%)] dark:text-white border border-black/5 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/[0.1] transition-colors backdrop-blur"
+            href="#about"
+            className="rounded-xl px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white/70 dark:bg-white/[0.06] text-[hsl(230_16%_20%)] dark:text-white border border-black/5 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/[0.1] transition-colors backdrop-blur"
           >
-            Try a search →
+            Learn more →
           </Link>
         </div>
       </div>
@@ -332,34 +379,34 @@ function SearchResultCard({ result, onClick }: { result: BillSearchResult; onCli
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-4 rounded-lg hover:bg-white/60 dark:hover:bg-white/[0.08] transition-colors border border-transparent hover:border-[hsl(233_85%_60%)]/20"
+      className="w-full text-left p-4 rounded-xl transition-colors border border-black/5 dark:border-white/10 hover:border-[hsl(233_85%_60%)]/30 hover:bg-white/80 dark:hover:bg-white/[0.08]"
     >
-      <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex-1 min-w-0">
-          <div className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mb-1">
-            {result.congress}th Congress • {result.billType.toUpperCase()} {result.billNumber}
+          <div className="text-[11px] uppercase tracking-wide text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mb-1">
+            {result.congress}th • {result.billType.toUpperCase()} {result.billNumber}
           </div>
-          <h3 className="text-sm font-semibold text-[hsl(230_16%_20%)] dark:text-white/90 line-clamp-2 mb-2">
+          <h3 className="text-sm font-semibold text-[hsl(230_16%_20%)] dark:text-white/90 line-clamp-2">
             {result.title}
           </h3>
           {result.tagline && (
-            <p className="text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 italic line-clamp-1 mb-2">
+            <p className="mt-1 text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 italic line-clamp-1">
               {result.tagline}
             </p>
           )}
         </div>
         <div className="flex-shrink-0 flex flex-col items-end gap-1">
-          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[hsl(233_85%_60%)]/15 dark:bg-white/[0.08] text-xs text-[hsl(233_85%_45%)] dark:text-white/80">
+          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[hsl(233_85%_60%)]/15 dark:bg-white/[0.08] text-[10px] text-[hsl(233_85%_45%)] dark:text-white/80">
             {(result.relevanceScore * 100).toFixed(0)}% match
           </span>
-          <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
-            {result.relevantChunks} section{result.relevantChunks !== 1 ? 's' : ''}
+          <span className="text-[10px] text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+            {result.relevantChunks} section{result.relevantChunks !== 1 ? "s" : ""}
           </span>
         </div>
       </div>
 
       {result.sponsor && (
-        <div className="text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mb-2">
+        <div className="text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mt-2">
           <span className="font-medium">Sponsor:</span> {result.sponsor.name}
           {result.sponsor.party && result.sponsor.state && (
             <span className="text-xs"> ({result.sponsor.party}-{result.sponsor.state})</span>
@@ -368,49 +415,44 @@ function SearchResultCard({ result, onClick }: { result: BillSearchResult; onCli
       )}
 
       {result.impactAreas && result.impactAreas.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {result.impactAreas.slice(0, 3).map((area, i) => (
-            <span
-              key={i}
-              className="bg-[hsl(233_85%_60%)]/12 dark:bg-white/[0.08] text-[hsl(233_85%_45%)] dark:text-white/90 text-xs px-2 py-0.5 rounded-full"
-            >
-              {area}
-            </span>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {result.impactAreas.slice(0, 4).map((area, i) => (
+            <ImpactChip key={i} label={area} />
           ))}
-          {result.impactAreas.length > 3 && (
-            <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
-              +{result.impactAreas.length - 3} more
+          {result.impactAreas.length > 4 && (
+            <span className="text-[10px] text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+              +{result.impactAreas.length - 4} more
             </span>
           )}
         </div>
       )}
 
-      <div className="text-xs text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85 line-clamp-2">
+      <div className="mt-2 text-xs text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85 line-clamp-2">
         {result.bestMatchText}
       </div>
     </button>
   );
 }
 
-/* ---------- Search ---------- */
+/* ---------- Hero Search (main focus) ---------- */
 
-function SearchSection() {
+function HeroSearch() {
   const [value, setValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  
+
   const searchBills = useAction(api.agent.searchBills);
   const debouncedValue = useDebounce(value, 300);
 
   const placeholders = useMemo(
     () => [
-      "Search for healthcare reform bills...",
-      "Find climate policy legislation...",
-      "Explore immigration reform...",
-      "Discover tax policy changes...",
-      "Show me bills about small businesses...",
-      "Education funding in the House...",
+      "Search healthcare reform bills…",
+      "Find climate policy legislation…",
+      "Explore immigration reform…",
+      "Discover tax policy changes…",
+      "Bills about small businesses…",
+      "Education funding in the House…",
     ],
     []
   );
@@ -435,26 +477,20 @@ function SearchSection() {
     return () => window.removeEventListener("keydown", onK);
   }, []);
 
-  // Perform search when debounced value changes
   useEffect(() => {
     if (debouncedValue.trim() && debouncedValue.length > 2) {
       setIsSearching(true);
-      searchBills({
-        query: debouncedValue,
-        limit: 6,
-      })
+      searchBills({ query: debouncedValue, limit: 6 })
         .then((results) => {
-          console.log("Search results:", results);
           setSearchResults(results);
           setShowDropdown(true);
         })
         .catch((error) => {
           console.error("Search error:", error);
           setSearchResults(null);
+          setShowDropdown(true);
         })
-        .finally(() => {
-          setIsSearching(false);
-        });
+        .finally(() => setIsSearching(false));
     } else {
       setSearchResults(null);
       setShowDropdown(false);
@@ -462,11 +498,10 @@ function SearchSection() {
   }, [debouncedValue, searchBills]);
 
   const handleResultClick = (result: BillSearchResult) => {
-    // Extract bill information and navigate to bill details
-    console.log("Selected result:", result);
+    console.log(result);
+    // TODO: Navigate to bill details page using result.billId
     setShowDropdown(false);
     setValue("");
-    // TODO: Navigate to bill details page using result.billId
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -478,109 +513,105 @@ function SearchSection() {
   };
 
   return (
-    <section id="search" className="relative py-16 md:py-20 px-4 sm:px-6 lg:px-8">
-      {/* Soft spotlight */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_10%,black,transparent)]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-72 w-[42rem] rounded-full blur-3xl bg-[hsl(233_85%_60%)]/15" />
-      </div>
+    <div className="relative max-w-3xl mx-auto">
+      <div
+        className={cn(
+          "relative rounded-2xl p-3 md:p-4",
+          "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+          "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+        )}
+      >
+        <label htmlFor="main-search" className="sr-only">
+          Search bills
+        </label>
 
-      <div className="max-w-4xl mx-auto">
         <div className="relative">
-          <div
-            className={cn(
-              "relative rounded-2xl p-5 md:p-6",
-              "bg-white/70 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-              "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            {isSearching ? (
+              <div className="animate-spin h-5 w-5 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
+            ) : (
+              <svg className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             )}
-          >
-            <label htmlFor="main-search" className="sr-only">
-              Search bills
-            </label>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                {isSearching ? (
-                  <div className="animate-spin h-5 w-5 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
-                ) : (
-                  <svg className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                )}
-              </div>
-
-              <input
-                id="main-search"
-                type="text"
-                value={value}
-                onChange={handleInputChange}
-                className={cn(
-                  "w-full rounded-xl border-2 border-transparent bg-transparent",
-                  "pl-12 pr-28 py-4 text-lg md:text-xl",
-                  "placeholder:text-[hsl(230_12%_60%)]/80 dark:placeholder:text-[hsl(220_12%_78%)]/70",
-                  "text-[hsl(230_16%_20%)] dark:text-[hsl(220_12%_92%)]",
-                  "focus:outline-none focus:border-[hsl(233_85%_60%)]/60"
-                )}
-                placeholder={placeholders[placeholderIndex]}
-                autoComplete="off"
-              />
-
-              {value && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setValue("");
-                    setShowDropdown(false);
-                    setSearchResults(null);
-                  }}
-                  className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white"
-                  aria-label="Clear search"
-                  title="Clear"
-                >
-                  ×
-                </button>
-              )}
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
-                  ⌘K
-                </kbd>
-              </div>
-            </div>
           </div>
 
-          {/* Dynamic Search Results Dropdown */}
-          {showDropdown && searchResults && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-50">
-              <div className="rounded-2xl p-4 bg-white/90 dark:bg-white/[0.08] border border-black/5 dark:border-white/10 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.25)] backdrop-blur-xl">
-                {searchResults.summary && (
-                  <div className="mb-4 p-3 rounded-lg bg-[hsl(233_85%_60%)]/10 dark:bg-white/[0.06]">
-                    <p className="text-sm text-[hsl(233_85%_45%)] dark:text-white/90">{searchResults.summary}</p>
-                    {searchResults.totalChunks > 0 && (
-                      <p className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mt-1">
-                        Searched through {searchResults.totalChunks} sections of legislative text
-                      </p>
-                    )}
-                  </div>
-                )}
-                
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {searchResults.results.map((result) => (
-                    <SearchResultCard 
-                      key={result.billId} 
-                      result={result} 
-                      onClick={() => handleResultClick(result)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          <input
+            id="main-search"
+            type="text"
+            value={value}
+            onChange={handleInputChange}
+            className={cn(
+              "w-full rounded-xl border-2 border-transparent bg-transparent",
+              "pl-12 pr-28 py-3.5 md:py-4 text-base md:text-lg",
+              "placeholder:text-[hsl(230_12%_60%)]/80 dark:placeholder:text-[hsl(220_12%_78%)]/70",
+              "text-[hsl(230_16%_20%)] dark:text-[hsl(220_12%_92%)]",
+              "focus:outline-none focus:border-[hsl(233_85%_60%)]/60"
+            )}
+            placeholder={placeholders[placeholderIndex]}
+            autoComplete="off"
+          />
 
-        <p className="text-center text-[hsl(230_12%_40%)]/80 dark:text-[hsl(220_12%_78%)]/80 mt-4">
-          Use natural language to search through thousands of bills and find what matters to you.
-        </p>
+          {value && (
+            <button
+              type="button"
+              onClick={() => {
+                setValue("");
+                setShowDropdown(false);
+                setSearchResults(null);
+              }}
+              className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white"
+              aria-label="Clear search"
+              title="Clear"
+            >
+              ×
+            </button>
+          )}
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
+              ⌘K
+            </kbd>
+          </div>
+        </div>
       </div>
-    </section>
+
+      {/* Dropdown results - full width of search card */}
+      {showDropdown && (
+        <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-50 max-w-full">
+          <div className="rounded-2xl p-3 md:p-4 bg-white/90 dark:bg-white/[0.08] border border-black/5 dark:border-white/10 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            {isSearching && (
+              <div className="p-4 flex items-center gap-3 text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/85">
+                <div className="animate-spin h-4 w-4 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
+                Searching bills…
+              </div>
+            )}
+
+            {!isSearching && searchResults?.summary && (
+              <div className="mb-3 md:mb-4 p-3 rounded-lg bg-[hsl(233_85%_60%)]/10 dark:bg-white/[0.06]">
+                <p className="text-sm text-[hsl(233_85%_45%)] dark:text-white/90">{searchResults.summary}</p>
+                {searchResults.totalChunks > 0 && (
+                  <p className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mt-1">
+                    Searched {searchResults.totalChunks} sections of legislative text
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {!isSearching && (!searchResults || searchResults.results.length === 0) && (
+                <div className="p-6 text-center text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+                  No results yet. Try searching for &ldquo;farm bill subsidies&rdquo; or &ldquo;student loan forgiveness&rdquo;.
+                </div>
+              )}
+
+              {searchResults?.results.map((result) => (
+                <SearchResultCard key={result.billId} result={result} onClick={() => handleResultClick(result)} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -588,16 +619,40 @@ function SearchSection() {
 
 function LatestBillsSection() {
   const bills = useQuery(api.homepage.getLatestBills);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    if (!container || !bills || bills.length === 0) return;
+
+    const scrollLeft = container.scrollLeft;
+    const totalWidth = container.scrollWidth - container.clientWidth;
+    
+    if (totalWidth <= 0) return;
+
+    // Estimate card width based on actual bills length
+    const cardWidthEstimate = container.scrollWidth / bills.length;
+    
+    const centerScrollPosition = scrollLeft + container.clientWidth / 2;
+    let newIndex = Math.floor(centerScrollPosition / cardWidthEstimate);
+
+    newIndex = Math.max(0, Math.min(bills.length - 1, newIndex));
+
+    if (newIndex !== selectedIndex) {
+      setSelectedIndex(newIndex);
+    }
+  };
 
   return (
-    <section id="bills" className="relative py-18 md:py-20 px-4 sm:px-6 lg:px-8">
+    <section id="bills" className="relative py-14 md:py-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-[50rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/12" />
       </div>
 
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight text-[hsl(230_16%_14%)] dark:text-white">
+        <div className="text-left mb-8 md:mb-10">
+          <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight text-[hsl(230_16%_14%)] dark:text-white">
             Latest Bills
           </h2>
           <p className="mt-2 text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85">
@@ -606,23 +661,49 @@ function LatestBillsSection() {
         </div>
 
         {bills === undefined ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "rounded-2xl p-6",
-                  "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-                  "animate-pulse"
-                )}
-              >
-                <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3 mb-3" />
-                <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-3/4 mb-3" />
-                <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-full mb-2" />
-                <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3" />
-              </div>
-            ))}
-          </div>
+          <>
+            {/* Mobile Loading Skeleton */}
+            <div className="md:hidden flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4 scrollbar-hide">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="min-w-[280px] w-[85vw] max-w-[340px] flex-shrink-0"
+                >
+                  <div
+                    className={cn(
+                      "rounded-2xl p-6 h-full",
+                      "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+                      "animate-pulse"
+                    )}
+                  >
+                    <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3 mb-3" />
+                    <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-3/4 mb-3" />
+                    <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-full mb-2" />
+                    <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Desktop Loading Skeleton */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "rounded-2xl p-6",
+                    "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+                    "animate-pulse"
+                  )}
+                >
+                  <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3 mb-3" />
+                  <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-3/4 mb-3" />
+                  <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-full mb-2" />
+                  <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          </>
         ) : bills.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85 text-lg">
@@ -630,11 +711,49 @@ function LatestBillsSection() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {bills.map((bill) => (
-              <BillCard key={bill._id} bill={bill} />
-            ))}
-          </div>
+          <>
+            {/* Mobile: Horizontal Scrollable */}
+            <div 
+              ref={scrollContainerRef}
+              className="md:hidden flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide"
+              onScroll={handleScroll}
+            >
+              {bills.map((bill) => (
+                <div 
+                  key={bill._id} 
+                  className="min-w-[280px] w-[85vw] max-w-[340px] snap-center flex-shrink-0"
+                >
+                  <BillCard bill={bill} />
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile Scroll Indicators */}
+            {bills.length > 1 && (
+              <div className="md:hidden flex justify-center mt-6">
+                <div className="flex space-x-2">
+                  {bills.map((_, index) => (
+                    <div 
+                      key={index} 
+                      className={cn(
+                        "transition-all duration-300 rounded-full",
+                        selectedIndex === index 
+                          ? "w-8 h-2 bg-[hsl(233_85%_60%)]" 
+                          : "w-2 h-2 bg-[hsl(233_85%_60%)]/40"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Desktop: Grid layout */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+              {bills.map((bill) => (
+                <BillCard key={bill._id} bill={bill} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </section>
@@ -645,9 +764,7 @@ function StatusBadge({ status }: { status: string }) {
   const s = status.toLowerCase();
   let color =
     "bg-amber-100/70 text-amber-900 border-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:border-amber-300/20";
-  let icon = (
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
-  );
+  let icon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />;
 
   if (s.includes("passed") || s.includes("enacted")) {
     color =
@@ -729,12 +846,7 @@ function BillCard({ bill }: { bill: Bill }) {
       {bill.impactAreas && bill.impactAreas.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-5">
           {bill.impactAreas.slice(0, 3).map((area, i) => (
-            <span
-              key={i}
-              className="bg-[hsl(233_85%_60%)]/12 dark:bg-white/[0.08] text-[hsl(233_85%_45%)] dark:text-white/90 text-xs px-2.5 py-1 rounded-full"
-            >
-              {area}
-            </span>
+            <ImpactChip key={i} label={area} />
           ))}
           {bill.impactAreas.length > 3 && (
             <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
@@ -782,7 +894,7 @@ function BillCard({ bill }: { bill: Bill }) {
 
 function Footer() {
   return (
-    <footer className="relative mt-16 bg-gradient-to-b from-transparent to-white/70 dark:to-white/[0.04]">
+    <footer id="about" className="relative mt-16 bg-gradient-to-b from-transparent to-white/70 dark:to-white/[0.04]">
       <div aria-hidden className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(233_85%_60%)]/50 to-transparent" />
       <div className="px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
@@ -802,20 +914,20 @@ function Footer() {
           <div>
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Bills</Link></li>
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Politicians</Link></li>
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Search</Link></li>
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">API</Link></li>
+              <li><Link href="#bills" className="hover:text-[hsl(233_85%_60%)] transition-colors">Bills</Link></li>
+              <li><Link href="#politicians" className="hover:text-[hsl(233_85%_60%)] transition-colors">Politicians</Link></li>
+              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Search</a></li>
+              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">API</a></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">About</Link></li>
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Privacy</Link></li>
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Terms</Link></li>
-              <li><Link href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Contact</Link></li>
+              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">About</a></li>
+              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Privacy</a></li>
+              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Terms</a></li>
+              <li><a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">Contact</a></li>
             </ul>
           </div>
         </div>

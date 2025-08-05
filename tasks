@@ -4,6 +4,6 @@ change to workflow
 cron should call base func
 render bills
 
-group results
-improve ui
+//group results
+//improve ui
 update globals css with new colors etc

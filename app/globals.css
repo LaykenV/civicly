@@ -211,6 +211,15 @@ body {
   animation: typewriter 2s ease-in-out infinite;
 }
 
+/* Scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .btn-primary,
