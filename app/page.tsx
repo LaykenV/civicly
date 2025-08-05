@@ -295,11 +295,7 @@ function IconButton({
       title={title}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center justify-center rounded-xl p-2.5 text-[hsl(230_12%_52%)]",
-        "hover:text-[hsl(230_16%_20%)] dark:hover:text-[hsl(220_10%_94%)]",
-        "hover:bg-[hsl(230_10%_94%)]/70 dark:hover:bg-white/5",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-transparent",
-        "transition-colors",
+        "icon-button",
         className
       )}
     >
@@ -494,23 +490,13 @@ function Header() {
               <>
                 <button
                   onClick={() => router.push("/signin")}
-                  className={cn(
-                    "text-sm px-3 py-2 rounded-lg",
-                    "text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_72%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white",
-                    "hover:bg-[hsl(230_10%_94%)]/70 dark:hover:bg-white/5",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
-                  )}
+                  className="btn-secondary"
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => router.push("/signin")}
-                  className={cn(
-                    "rounded-lg px-4 py-2 text-sm font-semibold text-white",
-                    "bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]",
-                    "shadow-[0_10px_20px_-10px_rgba(66,99,235,0.5)] hover:shadow-[0_16px_32px_-12px_rgba(66,99,235,0.6)]",
-                    "transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
-                  )}
+                  className="btn-primary"
                 >
                   Get Started
                 </button>
@@ -944,22 +930,19 @@ function LatestBillsSection() {
 
 function StatusBadge({ status }: { status: string }) {
   const s = status.toLowerCase();
-  let color =
-    "bg-amber-100/70 text-amber-900 border-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:border-amber-300/20";
+  let colorClass = "status-committee"; // Default to warning/committee status
   let icon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />;
 
   if (s.includes("passed") || s.includes("enacted")) {
-    color =
-      "bg-emerald-100/70 text-emerald-900 border-emerald-200 dark:bg-emerald-400/10 dark:text-emerald-300 dark:border-emerald-300/20";
+    colorClass = "status-passed";
     icon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />;
   } else if (s.includes("failed") || s.includes("rejected")) {
-    color =
-      "bg-rose-100/70 text-rose-900 border-rose-200 dark:bg-rose-400/10 dark:text-rose-300 dark:border-rose-300/20";
+    colorClass = "status-failed";
     icon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />;
   }
 
   return (
-    <span className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium", color)}>
+    <span className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium", colorClass)}>
       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
         {icon}
       </svg>
@@ -1095,12 +1078,12 @@ function Footer() {
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
               <li>
-                <Link href="#bills" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/bills" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Bills
                 </Link>
               </li>
               <li>
-                <Link href="#politicians" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/politicians" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Politicians
                 </Link>
               </li>
@@ -1110,7 +1093,7 @@ function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <a href="/api" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   API
                 </a>
               </li>
@@ -1121,7 +1104,7 @@ function Footer() {
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
               <li>
-                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <a href="/about" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   About
                 </a>
               </li>

@@ -450,20 +450,6 @@ export const vectorizeBillData = internalAction({
       // Create a unique namespace for this bill
       const billIdentifier = `${extractedData.congress}-${extractedData.billType}-${extractedData.billNumber}`;
       
-      // Prepare metadata content (this will be in every chunk)
-      const metadataContent = `
-      Title: ${extractedData.officialTitle}
-      ${extractedData.cleanedShortTitle ? `Short Title: ${extractedData.cleanedShortTitle}` : ''}
-      Type: ${extractedData.billType.toUpperCase()} ${extractedData.billNumber}
-      Congress: ${extractedData.congress}
-      Version: ${extractedData.versionCode}
-      Sponsor: ${extractedData.sponsor.name}
-      Committees: ${extractedData.committees.join(", ")}
-      Summary: ${extractedData.summary}
-      Tag Line: ${extractedData.tagLine}
-      Impact Areas: ${extractedData.impactAreas.join(", ")}
-            `.trim();
-
       // Simple but effective chunking strategy for legislative text
       const chunkBillText = (fullText: string, chunkSize: number = 2000, overlap: number = 200): string[] => {
         // If text is small enough, return as single chunk
@@ -505,41 +491,51 @@ export const vectorizeBillData = internalAction({
         return chunks;
       };
 
-      // Chunk the full text
+      // Chunk the full text - now just the actual bill text without metadata
       const textChunks = chunkBillText(extractedData.fullText);
       
-      // Create final chunks with metadata prepended to each text chunk
-      const finalChunks = textChunks.map((chunk, index) => {
-        return `${metadataContent}
+      console.log(`Chunked bill ${billIdentifier} into ${textChunks.length} chunks`);
 
---- Bill Text (Part ${index + 1}/${textChunks.length}) ---
-${chunk}`;
-      });
+      // Prepare metadata that will be stored separately from content
+      const metadata = {
+        billIdentifier,
+        congress: extractedData.congress.toString(),
+        billType: extractedData.billType,
+        billNumber: extractedData.billNumber,
+        versionCode: extractedData.versionCode,
+        officialTitle: extractedData.officialTitle,
+        cleanedShortTitle: extractedData.cleanedShortTitle || '',
+        sponsorName: extractedData.sponsor.name,
+        sponsorNameId: extractedData.sponsor.nameId || '',
+        committees: extractedData.committees.join(', '),
+        summary: extractedData.summary,
+        tagLine: extractedData.tagLine,
+        impactAreas: extractedData.impactAreas.join(', '),
+        actionDate: extractedData.actionDate || '',
+      };
 
-      console.log(`Chunked bill ${billIdentifier} into ${finalChunks.length} chunks`);
-
-      // Prepare filter values for debugging
+      // Prepare filter values for filtering (order matches filterNames in agent.ts)
       const filterValues = [
-        { name: "billIdentifier", value: billIdentifier }, // Index 0 - unique identifier for precise filtering
+        { name: "billIdentifier", value: billIdentifier },
         { name: "billType", value: extractedData.billType }, 
         { name: "congress", value: extractedData.congress.toString() },  
-        { name: "sponsor", value: extractedData.sponsor.name }, 
-        // Temporarily disabled due to RAG component issues with comma-separated values
-        // ...(extractedData.impactAreas.length > 0 ? [{ name: "impactAreas", value: extractedData.impactAreas.join(", ") }] : []),
-        // Temporarily commented out until RAG component filter issue is resolved
-        // ...(extractedData.committees.length > 0 ? [{ name: "committees", value: extractedData.committees.join(", ") }] : []),
+        { name: "sponsor", value: extractedData.sponsor.name },
+        // Can now easily add more filters without text parsing issues
+        { name: "versionCode", value: extractedData.versionCode },
+        { name: "impactAreas", value: extractedData.impactAreas.join(", ") },
+        { name: "committees", value: extractedData.committees.join(", ") },
       ];
 
       console.log(`Filter values for ${billIdentifier}:`, JSON.stringify(filterValues, null, 2));
 
-      // Add the chunked content to RAG
+      // Add the chunked content to RAG with metadata stored separately
       const { entryId } = await rag.add(ctx, {
         namespace: "bills", // Global namespace for all bills
         key: billIdentifier, // Unique key for this bill
-        chunks: finalChunks, // Use chunked content instead of single text
+        chunks: textChunks, // Pure bill text chunks without metadata
         title: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber}: ${extractedData.cleanedShortTitle || extractedData.officialTitle}`,
-        // Store metadata for filtering (order now matches filterNames in agent.ts)
-        filterValues,
+        metadata, // Store structured metadata separately
+        filterValues, // For filtering during search
       });
 
       console.log(`Successfully vectorized bill ${billIdentifier} with entry ID: ${entryId}`);

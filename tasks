@@ -8,11 +8,16 @@ cron should call base func
 //header update - no hamburger, no scroll buttons only links
 //browse latest bills -> browse all bills
 typewriter
+sticky header
 log warnings
-update globals css with new colors etc
+//update globals css with new colors etc
 
-post ss 
+//post ss 
 post tech stack
 
-build mvp bills page
-test summaries / gemini
+//build mvp bills page
+check data / chat with full text?
+test summaries / gemini / oss
+ui tweaks - top is foldable, coming soon, header?, dock
+
+politicians

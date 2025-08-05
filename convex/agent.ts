@@ -13,7 +13,15 @@ const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Initialize the RAG component for bill content search
 export const rag = new RAG(components.rag, {
-  filterNames: ["billIdentifier", "billType", "congress", "sponsor"], // Temporarily removed "impactAreas" 
+  filterNames: [
+    "billIdentifier", 
+    "billType", 
+    "congress", 
+    "sponsor",
+    "versionCode",
+    "impactAreas",
+    "committees"
+  ],
   textEmbeddingModel: openai.embedding("text-embedding-3-small"),
   embeddingDimension: 1536,
 });
@@ -96,14 +104,14 @@ export const searchBills = action({
     const filters = [];
     if (args.billType) filters.push({ name: "billType", value: args.billType });
     if (args.congress) filters.push({ name: "congress", value: args.congress });
-    /*if (args.impactAreas && args.impactAreas.length > 0) {
+    if (args.impactAreas && args.impactAreas.length > 0) {
       // Filter bills that contain any of the specified impact areas
       const impactAreasFilter = args.impactAreas.join(",");
       filters.push({ name: "impactAreas", value: impactAreasFilter });
-    }*/
+    }
 
     // Perform RAG search with chunked context
-    const { results } = await rag.search(ctx, {
+    const { results, entries } = await rag.search(ctx, {
       namespace: "bills",
       query: args.query,
       filters: filters.length > 0 ? filters : undefined,
@@ -112,57 +120,11 @@ export const searchBills = action({
       chunkContext: { before: 1, after: 1 }, // Include surrounding chunks for better context
     });
 
-    // Helper function to parse metadata from chunk content
-    const parseMetadata = (content: string) => {
-      const lines = content.split('\n');
-      const metadata: Record<string, string> = {};
-      
-      const metadataFields = [
-        'Title:',
-        'Short Title:',
-        'Type:',
-        'Congress:',
-        'Version:',
-        'Sponsor:',
-        'Committees:',
-        'Summary:',
-        'Tag Line:',
-        'Impact Areas:'
-      ];
-      
-      metadataFields.forEach(field => {
-        // First try exact match (like "Title:")
-        let line = lines.find(line => line.startsWith(field));
-        if (!line) {
-          // Then try with 6-space indentation (like "      Type:")
-          line = lines.find(line => line.startsWith(`      ${field}`));
-          if (line) {
-            // Remove the 6 spaces from the beginning for consistency
-            line = line.substring(6);
-          }
-        }
-        if (line) {
-          const key = field.replace(':', '').toLowerCase().replace(' ', '');
-          const value = line.substring(field.length).trim();
-          metadata[key] = value;
-        }
-      });
-      
-      return metadata;
-    };
-
-    // Helper function to create bill identifier
-    const createBillId = (metadata: Record<string, string>) => {
-      const type = metadata.type?.match(/([A-Z]+) (\w+)/);
-      const congress = metadata.congress;
-      if (type && congress) {
-        return `${congress}-${type[1]}-${type[2]}`;
-      }
-      return null;
-    };
+    // Log the number of entries found
+    console.log(`Found ${entries.length} entries for query: ${args.query}`, entries);
 
     // Helper function to parse sponsor information
-    const parseSponsor = (sponsorText: string) => {
+    const parseSponsor = (sponsorText: string | undefined) => {
       if (!sponsorText) return undefined;
       
       // Try to extract name, party, and state from sponsor text
@@ -183,64 +145,58 @@ export const searchBills = action({
     };
 
     // Helper function to parse impact areas
-    const parseImpactAreas = (impactText: string) => {
+    const parseImpactAreas = (impactText: string | undefined) => {
       if (!impactText) return undefined;
       return impactText.split(',').map(area => area.trim()).filter(area => area.length > 0);
     };
 
-    // Group results by bill
+    // Group results by bill using entry metadata
     const billGroups = new Map<string, {
-      metadata: Record<string, string>;
+      entry: typeof entries[0];
       chunks: Array<{ score: number; content: string; relevantText: string }>;
     }>();
 
     results.forEach(result => {
-      const content = result.content.map(c => c.text).join('\n');
-      const metadata = parseMetadata(content);
-      const billId = createBillId(metadata);
+      const entry = entries.find(e => e.entryId === result.entryId);
+      if (!entry || !entry.metadata) return;
       
-      if (billId) {
-        // Extract the actual bill text (after the metadata section)
-        const billTextStartIndex = content.indexOf('--- Bill Text');
-        const relevantText = billTextStartIndex > -1 
-          ? content.substring(billTextStartIndex)
-          : content;
+      const billId = entry.metadata.billIdentifier as string;
+      const content = result.content.map(c => c.text).join('\n');
+      const relevantText = content.slice(0, 500) + (content.length > 500 ? '...' : '');
 
-        if (!billGroups.has(billId)) {
-          billGroups.set(billId, {
-            metadata,
-            chunks: []
-          });
-        }
-        
-        billGroups.get(billId)!.chunks.push({
-          score: result.score,
-          content,
-          relevantText: relevantText.slice(0, 500) + (relevantText.length > 500 ? '...' : '')
+      if (!billGroups.has(billId)) {
+        billGroups.set(billId, {
+          entry,
+          chunks: []
         });
       }
+      
+      billGroups.get(billId)!.chunks.push({
+        score: result.score,
+        content,
+        relevantText
+      });
     });
 
-    // Convert grouped results to final format
+    // Convert grouped results to final format using metadata
     const processedResults = Array.from(billGroups.entries()).map(([billId, group]) => {
       // Find the chunk with the highest score
       const bestChunk = group.chunks.reduce((best, current) => 
         current.score > best.score ? current : best
       );
       
-      // Extract structured data from metadata
-      const typeMatch = group.metadata.type?.match(/([A-Z]+) (\w+)/);
-      const congress = parseInt(group.metadata.congress || '0');
+      // Extract data directly from entry metadata
+      const metadata = group.entry.metadata!;
       
       return {
         billId,
-        congress,
-        billType: typeMatch ? typeMatch[1] : 'Unknown',
-        billNumber: typeMatch ? typeMatch[2] : 'Unknown',
-        title: group.metadata.title || 'Unknown Title',
-        tagline: group.metadata.tagline || group.metadata.shortitle || undefined,
-        sponsor: parseSponsor(group.metadata.sponsor),
-        impactAreas: parseImpactAreas(group.metadata.impactareas),
+        congress: parseInt((metadata.congress as string) || '0'),
+        billType: (metadata.billType as string) || 'Unknown',
+        billNumber: (metadata.billNumber as string) || 'Unknown',
+        title: (metadata.cleanedShortTitle as string) || (metadata.officialTitle as string) || 'Unknown Title',
+        tagline: (metadata.tagLine as string) || undefined,
+        sponsor: parseSponsor(metadata.sponsorName as string),
+        impactAreas: parseImpactAreas(metadata.impactAreas as string),
         relevanceScore: bestChunk.score,
         relevantChunks: group.chunks.length,
         bestMatchText: bestChunk.relevantText,
@@ -465,11 +421,11 @@ export const generalLegislativeChat = action({
     if (args.context?.congress) {
       filters.push({ name: "congress", value: args.context.congress });
     }
-    /*if (args.context?.impactAreas && args.context.impactAreas.length > 0) {
+    if (args.context?.impactAreas && args.context.impactAreas.length > 0) {
       // Filter bills that contain any of the specified impact areas
       const impactAreasFilter = args.context.impactAreas.join(",");
       filters.push({ name: "impactAreas", value: impactAreasFilter });
-    }*/
+    }
     if (args.context?.billTypes) {
       args.context.billTypes.forEach(type => {
         filters.push({ name: "billType", value: type });

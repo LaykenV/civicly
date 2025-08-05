@@ -43,7 +43,8 @@ export default defineSchema({
     xmlUrl: v.string(),            // The source URL from govinfo.gov
   })
     .index("by_billId_and_version", ["billId", "versionCode"])
-    .index("by_xmlUrl", ["xmlUrl"]),
+    .index("by_xmlUrl", ["xmlUrl"])
+    .searchIndex("search_fullText", { searchField: "fullText" }),
 
   politicians: defineTable({
     name: v.string(),
