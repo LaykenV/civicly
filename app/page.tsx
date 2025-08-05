@@ -114,12 +114,21 @@ function Header() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeHash, setActiveHash] = useState("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    // Set initial hash and listen for changes
+    const updateHash = () => setActiveHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
   }, []);
 
   const NavLink = ({ href, label }: { href: string; label: string }) => (
@@ -130,7 +139,7 @@ function Header() {
         "hover:text-[hsl(233_85%_55%)] dark:hover:text-[hsl(233_85%_65%)]",
         "transition-colors data-[active=true]:text-[hsl(233_85%_55%)] dark:data-[active=true]:text-[hsl(233_85%_65%)]"
       )}
-      data-active={typeof window !== "undefined" && window.location.hash === href}
+      data-active={activeHash === href}
     >
       {label}
     </Link>
@@ -317,6 +326,72 @@ function HeroSection() {
   );
 }
 
+/* ---------- Search Result Card ---------- */
+
+function SearchResultCard({ result, onClick }: { result: BillSearchResult; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left p-4 rounded-lg hover:bg-white/60 dark:hover:bg-white/[0.08] transition-colors border border-transparent hover:border-[hsl(233_85%_60%)]/20"
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mb-1">
+            {result.congress}th Congress • {result.billType.toUpperCase()} {result.billNumber}
+          </div>
+          <h3 className="text-sm font-semibold text-[hsl(230_16%_20%)] dark:text-white/90 line-clamp-2 mb-2">
+            {result.title}
+          </h3>
+          {result.tagline && (
+            <p className="text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 italic line-clamp-1 mb-2">
+              {result.tagline}
+            </p>
+          )}
+        </div>
+        <div className="flex-shrink-0 flex flex-col items-end gap-1">
+          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[hsl(233_85%_60%)]/15 dark:bg-white/[0.08] text-xs text-[hsl(233_85%_45%)] dark:text-white/80">
+            {(result.relevanceScore * 100).toFixed(0)}% match
+          </span>
+          <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+            {result.relevantChunks} section{result.relevantChunks !== 1 ? 's' : ''}
+          </span>
+        </div>
+      </div>
+
+      {result.sponsor && (
+        <div className="text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mb-2">
+          <span className="font-medium">Sponsor:</span> {result.sponsor.name}
+          {result.sponsor.party && result.sponsor.state && (
+            <span className="text-xs"> ({result.sponsor.party}-{result.sponsor.state})</span>
+          )}
+        </div>
+      )}
+
+      {result.impactAreas && result.impactAreas.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {result.impactAreas.slice(0, 3).map((area, i) => (
+            <span
+              key={i}
+              className="bg-[hsl(233_85%_60%)]/12 dark:bg-white/[0.08] text-[hsl(233_85%_45%)] dark:text-white/90 text-xs px-2 py-0.5 rounded-full"
+            >
+              {area}
+            </span>
+          ))}
+          {result.impactAreas.length > 3 && (
+            <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+              +{result.impactAreas.length - 3} more
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="text-xs text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85 line-clamp-2">
+        {result.bestMatchText}
+      </div>
+    </button>
+  );
+}
+
 /* ---------- Search ---------- */
 
 function SearchSection() {
@@ -369,6 +444,7 @@ function SearchSection() {
         limit: 6,
       })
         .then((results) => {
+          console.log("Search results:", results);
           setSearchResults(results);
           setShowDropdown(true);
         })
@@ -386,11 +462,11 @@ function SearchSection() {
   }, [debouncedValue, searchBills]);
 
   const handleResultClick = (result: BillSearchResult) => {
-    // Extract bill information and navigate
-    // For now, just log the result
+    // Extract bill information and navigate to bill details
     console.log("Selected result:", result);
     setShowDropdown(false);
     setValue("");
+    // TODO: Navigate to bill details page using result.billId
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -478,32 +554,21 @@ function SearchSection() {
                 {searchResults.summary && (
                   <div className="mb-4 p-3 rounded-lg bg-[hsl(233_85%_60%)]/10 dark:bg-white/[0.06]">
                     <p className="text-sm text-[hsl(233_85%_45%)] dark:text-white/90">{searchResults.summary}</p>
+                    {searchResults.totalChunks > 0 && (
+                      <p className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mt-1">
+                        Searched through {searchResults.totalChunks} sections of legislative text
+                      </p>
+                    )}
                   </div>
                 )}
                 
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {searchResults.results.map((result, index) => (
-                    <button
-                      key={index}
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {searchResults.results.map((result) => (
+                    <SearchResultCard 
+                      key={result.billId} 
+                      result={result} 
                       onClick={() => handleResultClick(result)}
-                      className="w-full text-left p-3 rounded-lg hover:bg-white/60 dark:hover:bg-white/[0.08] transition-colors border border-transparent hover:border-[hsl(233_85%_60%)]/20"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mb-1">
-                            {result.billInfo}
-                          </div>
-                          <p className="text-sm text-[hsl(230_16%_20%)] dark:text-white/90 line-clamp-2 mb-2">
-                            {result.relevantText}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[hsl(233_85%_60%)]/15 dark:bg-white/[0.08] text-xs text-[hsl(233_85%_45%)] dark:text-white/80">
-                            {(result.score * 100).toFixed(0)}% match
-                          </span>
-                        </div>
-                      </div>
-                    </button>
+                    />
                   ))}
                 </div>
               </div>

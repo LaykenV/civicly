@@ -72,12 +72,24 @@ export const searchBills = action({
   },
   returns: v.object({
     results: v.array(v.object({
-      entryId: v.string(),
-      billInfo: v.string(),
-      relevantText: v.string(),
-      score: v.number(),
+      billId: v.string(),
+      congress: v.number(),
+      billType: v.string(),
+      billNumber: v.string(),
+      title: v.string(),
+      tagline: v.optional(v.string()),
+      sponsor: v.optional(v.object({
+        name: v.string(),
+        party: v.optional(v.string()),
+        state: v.optional(v.string()),
+      })),
+      impactAreas: v.optional(v.array(v.string())),
+      relevanceScore: v.number(),
+      relevantChunks: v.number(),
+      bestMatchText: v.string(),
     })),
     summary: v.string(),
+    totalChunks: v.number(),
   }),
   handler: async (ctx, args): Promise<BillSearchResponse> => {
     // Build filters based on provided criteria
@@ -91,48 +103,167 @@ export const searchBills = action({
     }*/
 
     // Perform RAG search with chunked context
-    const { results, entries } = await rag.search(ctx, {
+    const { results } = await rag.search(ctx, {
       namespace: "bills",
       query: args.query,
       filters: filters.length > 0 ? filters : undefined,
-      limit: args.limit || 10,
+      limit: args.limit || 20, // Increased limit to get more chunks before grouping
       vectorScoreThreshold: 0.35, // Slightly higher threshold for better quality
       chunkContext: { before: 1, after: 1 }, // Include surrounding chunks for better context
     });
 
-    // Process results to extract bill information and relevant text
-    const processedResults = results.map(result => {
-      // Extract bill metadata from the beginning of each chunk
-      const content = result.content.map(c => c.text).join('\n');
+    // Helper function to parse metadata from chunk content
+    const parseMetadata = (content: string) => {
       const lines = content.split('\n');
-      const titleLine = lines.find(line => line.startsWith('Title:'));
-      const typeLine = lines.find(line => line.startsWith('Type:'));
-      const congressLine = lines.find(line => line.startsWith('Congress:'));
+      const metadata: Record<string, string> = {};
       
-      const billInfo = [titleLine, typeLine, congressLine].filter(Boolean).join('\n');
+      const metadataFields = [
+        'Title:',
+        'Short Title:',
+        'Type:',
+        'Congress:',
+        'Version:',
+        'Sponsor:',
+        'Committees:',
+        'Summary:',
+        'Tag Line:',
+        'Impact Areas:'
+      ];
       
-      // Extract the actual bill text (after the metadata section)
-      const billTextStartIndex = content.indexOf('--- Bill Text');
-      const relevantText = billTextStartIndex > -1 
-        ? content.substring(billTextStartIndex)
-        : content;
+      metadataFields.forEach(field => {
+        // First try exact match (like "Title:")
+        let line = lines.find(line => line.startsWith(field));
+        if (!line) {
+          // Then try with 6-space indentation (like "      Type:")
+          line = lines.find(line => line.startsWith(`      ${field}`));
+          if (line) {
+            // Remove the 6 spaces from the beginning for consistency
+            line = line.substring(6);
+          }
+        }
+        if (line) {
+          const key = field.replace(':', '').toLowerCase().replace(' ', '');
+          const value = line.substring(field.length).trim();
+          metadata[key] = value;
+        }
+      });
+      
+      return metadata;
+    };
 
+    // Helper function to create bill identifier
+    const createBillId = (metadata: Record<string, string>) => {
+      const type = metadata.type?.match(/([A-Z]+) (\w+)/);
+      const congress = metadata.congress;
+      if (type && congress) {
+        return `${congress}-${type[1]}-${type[2]}`;
+      }
+      return null;
+    };
+
+    // Helper function to parse sponsor information
+    const parseSponsor = (sponsorText: string) => {
+      if (!sponsorText) return undefined;
+      
+      // Try to extract name, party, and state from sponsor text
+      // Format is usually "Rep. Name (Party-State)" or similar
+      const match = sponsorText.match(/(?:Rep\.|Sen\.)?\s*([^(]+)\s*\(([^-]+)-([^)]+)\)/);
+      if (match) {
+        return {
+          name: match[1].trim(),
+          party: match[2].trim(),
+          state: match[3].trim(),
+        };
+      }
+      
+      // Fallback to just the name if pattern doesn't match
       return {
-        entryId: result.entryId,
-        billInfo,
-        relevantText: relevantText.slice(0, 500) + (relevantText.length > 500 ? '...' : ''),
-        score: result.score,
+        name: sponsorText.trim(),
+      };
+    };
+
+    // Helper function to parse impact areas
+    const parseImpactAreas = (impactText: string) => {
+      if (!impactText) return undefined;
+      return impactText.split(',').map(area => area.trim()).filter(area => area.length > 0);
+    };
+
+    // Group results by bill
+    const billGroups = new Map<string, {
+      metadata: Record<string, string>;
+      chunks: Array<{ score: number; content: string; relevantText: string }>;
+    }>();
+
+    results.forEach(result => {
+      const content = result.content.map(c => c.text).join('\n');
+      const metadata = parseMetadata(content);
+      const billId = createBillId(metadata);
+      
+      if (billId) {
+        // Extract the actual bill text (after the metadata section)
+        const billTextStartIndex = content.indexOf('--- Bill Text');
+        const relevantText = billTextStartIndex > -1 
+          ? content.substring(billTextStartIndex)
+          : content;
+
+        if (!billGroups.has(billId)) {
+          billGroups.set(billId, {
+            metadata,
+            chunks: []
+          });
+        }
+        
+        billGroups.get(billId)!.chunks.push({
+          score: result.score,
+          content,
+          relevantText: relevantText.slice(0, 500) + (relevantText.length > 500 ? '...' : '')
+        });
+      }
+    });
+
+    // Convert grouped results to final format
+    const processedResults = Array.from(billGroups.entries()).map(([billId, group]) => {
+      // Find the chunk with the highest score
+      const bestChunk = group.chunks.reduce((best, current) => 
+        current.score > best.score ? current : best
+      );
+      
+      // Extract structured data from metadata
+      const typeMatch = group.metadata.type?.match(/([A-Z]+) (\w+)/);
+      const congress = parseInt(group.metadata.congress || '0');
+      
+      return {
+        billId,
+        congress,
+        billType: typeMatch ? typeMatch[1] : 'Unknown',
+        billNumber: typeMatch ? typeMatch[2] : 'Unknown',
+        title: group.metadata.title || 'Unknown Title',
+        tagline: group.metadata.tagline || group.metadata.shortitle || undefined,
+        sponsor: parseSponsor(group.metadata.sponsor),
+        impactAreas: parseImpactAreas(group.metadata.impactareas),
+        relevanceScore: bestChunk.score,
+        relevantChunks: group.chunks.length,
+        bestMatchText: bestChunk.relevantText,
       };
     });
 
+    // Sort by relevance score (highest first)
+    processedResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+    // Take only the requested number of bills (not chunks)
+    const limitedResults = processedResults.slice(0, args.limit || 10);
+
     // Generate a summary of the search results
-    const summary = entries.length > 0 
-      ? `Found ${entries.length} relevant bill(s) for "${args.query}". The search identified content across ${results.length} sections of legislative text.`
+    const totalChunks = results.length;
+    const totalBills = billGroups.size;
+    const summary = totalBills > 0 
+      ? `Found ${totalBills} relevant bill(s) for "${args.query}" across ${totalChunks} sections of legislative text.`
       : `No bills found matching "${args.query}" with the specified criteria.`;
 
     return {
-      results: processedResults,
+      results: limitedResults,
       summary,
+      totalChunks,
     };
   },
 });

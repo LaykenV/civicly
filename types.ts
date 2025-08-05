@@ -116,15 +116,27 @@ export interface DbBillVersion {
 
 // API response types
 export interface BillSearchResult {
-  entryId: string;
-  billInfo: string;
-  relevantText: string;
-  score: number;
+  billId: string; // Unique identifier for the bill
+  congress: number;
+  billType: string;
+  billNumber: string;
+  title: string;
+  tagline?: string;
+  sponsor?: {
+    name: string;
+    party?: string;
+    state?: string;
+  };
+  impactAreas?: string[];
+  relevanceScore: number; // Highest score from all chunks of this bill
+  relevantChunks: number; // Number of relevant chunks found for this bill
+  bestMatchText: string; // Text from the highest-scoring chunk
 }
 
 export interface BillSearchResponse {
   results: BillSearchResult[];
   summary: string;
+  totalChunks: number; // Total number of chunks found across all bills
 }
 
 export interface ChatResponse {
