@@ -14,8 +14,9 @@ post tech stack
 
 Pipeline:
 test summaries / gemini? / gpt5?
-how to link summary to relevant section in full bill txt?
+how to link summary to relevant section in full bill txt? citations? relevant text string?
 summary should be split into sections
+add textLength field to bills
 
 
 bills page:

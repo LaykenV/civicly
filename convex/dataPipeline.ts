@@ -405,7 +405,12 @@ Please respond with ONLY a valid JSON object in this exact format:
       // Parse the JSON response
       let parsedResult;
       try {
-        parsedResult = JSON.parse(result.text);
+        // Strip Markdown code fences if present
+        const raw = result.text.trim();
+        const unwrapped = raw.startsWith("```")
+          ? raw.replace(/^```[a-zA-Z]*\n/, "").replace(/\n```\s*$/, "")
+          : raw;
+        parsedResult = JSON.parse(unwrapped);
       } catch {
         console.error("Failed to parse AI response as JSON:", result.text);
         // Fallback response

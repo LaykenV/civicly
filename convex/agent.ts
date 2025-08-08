@@ -1,7 +1,7 @@
 import { Agent } from "@convex-dev/agent";
 import { RAG } from "@convex-dev/rag";
 import { createOpenAI } from "@ai-sdk/openai";
-//import { google } from "@ai-sdk/google";
+import { google } from "@ai-sdk/google";
 import { components } from "./_generated/api";
 import { action, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
@@ -29,7 +29,7 @@ export const rag = new RAG(components.rag, {
 // Initialize the Agent for bill analysis
 export const billAnalysisAgent = new Agent(components.agent, {
   name: "Bill Analysis Agent",
-  chat: openai.chat("gpt-4o-mini"),
+  chat: google("gemini-2.5-flash"),
   instructions: `You are an expert legal and policy analyst specializing in U.S. federal legislation. 
 Your role is to:
 1. Analyze bills and provide clear, accurate summaries
