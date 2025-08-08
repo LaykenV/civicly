@@ -85,6 +85,28 @@ function classNames(...arr: Array<string | false | undefined>) {
   return arr.filter(Boolean).join(" ");
 }
 
+// Split long, newline-less text into display-friendly chunks while preserving
+// character positions so scroll mapping based on char indices stays correct.
+function chunkTextByDisplay(text: string, maxCharsPerLine = 280): Array<string> {
+  const chunks: Array<string> = [];
+  let startIndex = 0;
+  while (startIndex < text.length) {
+    let endIndex = Math.min(startIndex + maxCharsPerLine, text.length);
+
+    if (endIndex < text.length) {
+      const lastWhitespace = text.lastIndexOf(" ", endIndex);
+      // Only wrap on whitespace if it meaningfully shortens the line to avoid tiny chunks
+      if (lastWhitespace > startIndex + Math.floor(maxCharsPerLine * 0.5)) {
+        endIndex = lastWhitespace + 1; // include the space to preserve exact character positions
+      }
+    }
+
+    chunks.push(text.slice(startIndex, endIndex));
+    startIndex = endIndex;
+  }
+  return chunks;
+}
+
 const BillPage: React.FC<PageProps> = ({ params }) => {
   const { isAuthenticated } = useConvexAuth();
   const convex = useConvex();
@@ -179,17 +201,28 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
 
   const lines = useMemo(() => {
     const text = versionText?.fullText ?? "";
-    return text.split(/\r?\n/);
+    if (!text) return [] as Array<string>;
+
+    // Prefer natural newlines when present; otherwise, create virtual lines for display
+    const split = text.split(/\r?\n/);
+    if (split.length > 1) return split;
+
+    return chunkTextByDisplay(text, 280);
   }, [versionText?.fullText]);
 
   const scrollToPosition = (charIndex: number) => {
     const container = textContainerRef.current;
     if (!container) return;
 
+    const rawText = versionText?.fullText ?? "";
+    const hasNewlines = /\r?\n/.test(rawText);
+
     let cumulative = 0;
     let targetLineIdx = 0;
     for (let i = 0; i < lines.length; i++) {
-      cumulative += lines[i].length + 1;
+      // If the source had newlines and we split on them, add one to account for the removed newline char.
+      // If we generated virtual lines, do not add an extra character.
+      cumulative += lines[i].length + (hasNewlines ? 1 : 0);
       if (cumulative >= charIndex) {
         targetLineIdx = i;
         break;

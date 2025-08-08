@@ -41,6 +41,7 @@ export const getBillByIdentifier = query({
          .eq("billNumber", args.billNumber)
       )
       .first();
+    console.log(bill);
     
     return bill;
   },
@@ -94,6 +95,7 @@ export const getBillWithSponsor = query({
     if (bill.sponsorId) {
       sponsor = await ctx.db.get(bill.sponsorId);
     }
+    console.log(sponsor);
 
     return { bill, sponsor };
   },
@@ -122,7 +124,7 @@ export const getBillVersions = query({
       .query("billVersions")
       .withIndex("by_billId_and_version", (q) => q.eq("billId", args.billId))
       .collect();
-
+    console.log(versions);
     // Return without fullText for performance (use getBillVersionText for full text)
     return versions.map(v => ({
       _id: v._id,
@@ -153,6 +155,7 @@ export const getBillVersionText = query({
   }), v.null()),
   handler: async (ctx, args) => {
     const version = await ctx.db.get(args.versionId);
+    console.log(version);
     return version;
   },
 });
@@ -179,6 +182,7 @@ export const getLatestBillVersion = query({
       .order("desc")
       .first();
 
+    console.log(versions);
     return versions;
   },
 });

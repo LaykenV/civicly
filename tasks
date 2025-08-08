@@ -1,23 +1,30 @@
 
-gemini > 4o?
 change to workflow
-cron should call base func
+cron should call internal base func
 
 
-//hero section bigger less padding on top of 'latest bills'
-//header update - no hamburger, no scroll buttons only links
-//browse latest bills -> browse all bills
+homepage:
 typewriter
 sticky header
 log warnings
-//update globals css with new colors etc
 
-//post ss 
+
+Marketing:
 post tech stack
 
-//build mvp bills page
-check data / chat with full text?
-test summaries / gemini / oss
-ui tweaks - top is foldable, coming soon, header?, dock
+Pipeline:
+test summaries / gemini? / gpt5?
+how to link summary to relevant section in full bill txt?
+summary should be split into sections
+
+
+bills page:
+ui tweaks - top is foldable, coming soon, header?, dock, floating animation on hover, chat and summary together
+debounce search and highlight
+
+backload data
+MVP LAUNCH
+
+chat with full text? need agent for long bills. ask agent with summary, then ask for vector searches, then use those as context again.
 
 politicians
