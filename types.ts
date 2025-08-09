@@ -34,6 +34,7 @@ export interface BillSummaryData {
   summary: string;
   tagLine: string;
   impactAreas: string[];
+  structuredSummary?: StructuredSummarySection[];
 }
 
 // Core extracted bill data structure
@@ -53,6 +54,18 @@ export interface ExtractedBillData {
   summary: string;
   tagLine: string;
   impactAreas: string[];
+}
+
+// Structured sectioned summary with citations
+export interface StructuredSummaryCitation {
+  label: string;       // e.g., "SEC. 101"
+  sectionId: string;   // e.g., "101"
+}
+
+export interface StructuredSummarySection {
+  title: string;       // section header
+  text: string;        // section body
+  citations?: StructuredSummaryCitation[];
 }
 
 // Parsed bill info from URL
@@ -89,6 +102,7 @@ export interface DbBill {
   tagline?: string;
   summary?: string;
   impactAreas?: string[];
+  structuredSummary?: StructuredSummarySection[];
 }
 
 export interface DbPolitician {
@@ -112,6 +126,7 @@ export interface DbBillVersion {
   publishedDate: string;
   fullText: string;
   xmlUrl: string;
+  textLength?: number;
 }
 
 // API response types

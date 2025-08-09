@@ -31,6 +31,22 @@ export const getBillByIdentifier = query({
     summary: v.optional(v.string()),
     changeAnalysis: v.optional(v.any()),
     impactAreas: v.optional(v.array(v.string())),
+    structuredSummary: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          text: v.string(),
+          citations: v.optional(
+            v.array(
+              v.object({
+                label: v.string(),
+                sectionId: v.string(),
+              }),
+            ),
+          ),
+        }),
+      ),
+    ),
   }), v.null()),
   handler: async (ctx, args) => {
     const bill = await ctx.db
@@ -71,6 +87,22 @@ export const getBillWithSponsor = query({
         summary: v.optional(v.string()),
         changeAnalysis: v.optional(v.any()),
         impactAreas: v.optional(v.array(v.string())),
+        structuredSummary: v.optional(
+          v.array(
+            v.object({
+              title: v.string(),
+              text: v.string(),
+              citations: v.optional(
+                v.array(
+                  v.object({
+                    label: v.string(),
+                    sectionId: v.string(),
+                  }),
+                ),
+              ),
+            }),
+          ),
+        ),
       }),
       sponsor: v.union(
         v.object({
@@ -118,6 +150,7 @@ export const getBillVersions = query({
     title: v.string(),
     publishedDate: v.string(),
     xmlUrl: v.string(),
+    textLength: v.optional(v.number()),
   })),
   handler: async (ctx, args) => {
     const versions = await ctx.db
@@ -134,6 +167,7 @@ export const getBillVersions = query({
       title: v.title,
       publishedDate: v.publishedDate,
       xmlUrl: v.xmlUrl,
+      textLength: v.textLength,
     }));
   },
 });
@@ -152,6 +186,7 @@ export const getBillVersionText = query({
     publishedDate: v.string(),
     fullText: v.string(),
     xmlUrl: v.string(),
+    textLength: v.optional(v.number()),
   }), v.null()),
   handler: async (ctx, args) => {
     const version = await ctx.db.get(args.versionId);
@@ -174,6 +209,7 @@ export const getLatestBillVersion = query({
     publishedDate: v.string(),
     fullText: v.string(),
     xmlUrl: v.string(),
+    textLength: v.optional(v.number()),
   }), v.null()),
   handler: async (ctx, args) => {
     const versions = await ctx.db
@@ -417,24 +453,52 @@ export const getBillSection = query({
         new RegExp(`\\(${args.sectionId}\\)`, 'i'),
       ];
 
+      let matchIndex = -1;
       for (const pattern of sectionPatterns) {
-        const match = fullText.search(pattern);
-        if (match !== -1) {
-          startPosition = match;
-          // Find the next section or end of text
-          const nextSectionMatch = fullText.substring(match + 1).search(/SEC\. \d+|Section \d+/i);
-          if (nextSectionMatch !== -1) {
-            endPosition = match + 1 + nextSectionMatch;
-          }
-          
-          return {
-            content: fullText.substring(startPosition, endPosition),
-            startPosition,
-            endPosition,
-            versionId: version._id,
-            versionCode: version.versionCode,
-          };
+        const m = fullText.search(pattern);
+        if (m !== -1) {
+          matchIndex = m;
+          break;
         }
+      }
+
+      // Fallback: phrase-based search if no numeric/section pattern found
+      if (matchIndex === -1) {
+        const needle = args.sectionId.trim().toLowerCase();
+        if (needle.length > 0) {
+          const idx = fullText.toLowerCase().indexOf(needle);
+          if (idx !== -1) {
+            matchIndex = idx;
+          }
+        }
+      }
+
+      if (matchIndex !== -1) {
+        startPosition = matchIndex;
+        // Find the next section or a reasonable boundary
+        const tail = fullText.substring(matchIndex + 1);
+        const nextSectionRegex = /SEC\. \d+|Section \d+/i;
+        const nextSectionMatch = tail.search(nextSectionRegex);
+        if (nextSectionMatch !== -1) {
+          endPosition = matchIndex + 1 + nextSectionMatch;
+        } else {
+          // Secondary boundary: next double newline or cap the slice length
+          const doubleNl = tail.search(/\n\n/);
+          if (doubleNl !== -1) {
+            endPosition = matchIndex + 1 + doubleNl;
+          } else {
+            // Cap to a window if no boundary found
+            endPosition = Math.min(fullText.length, startPosition + 2000);
+          }
+        }
+
+        return {
+          content: fullText.substring(startPosition, endPosition),
+          startPosition,
+          endPosition,
+          versionId: version._id,
+          versionCode: version.versionCode,
+        };
       }
     }
 

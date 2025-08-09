@@ -34,6 +34,22 @@ export const billSummaryDataValidator = v.object({
   summary: v.string(),
   tagLine: v.string(),
   impactAreas: v.array(v.string()),
+  structuredSummary: v.optional(
+    v.array(
+      v.object({
+        title: v.string(),
+        text: v.string(),
+        citations: v.optional(
+          v.array(
+            v.object({
+              label: v.string(),
+              sectionId: v.string(),
+            }),
+          ),
+        ),
+      }),
+    ),
+  ),
 });
 
 export const getLastCheckedTimestamp = internalQuery({
@@ -319,6 +335,7 @@ export const ingestAndEnrichBillFile = internalAction({
       extractedData.summary = summaryData.summary;
       extractedData.tagLine = summaryData.tagLine;
       extractedData.impactAreas = summaryData.impactAreas;
+      const structuredSummary = summaryData.structuredSummary ?? [];
 
       // Vectorize the enriched data
       await ctx.runAction(internal.dataPipeline.vectorizeBillData, { extractedData });
@@ -342,6 +359,7 @@ export const ingestAndEnrichBillFile = internalAction({
         summary: extractedData.summary,
         tagLine: extractedData.tagLine,
         impactAreas: extractedData.impactAreas,
+        structuredSummary,
       });
 
       return null;
@@ -375,9 +393,14 @@ export const getBillSummary = internalAction({
       // Create a detailed prompt for bill analysis
       const prompt = `Analyze this federal bill and provide:
 
-1. A comprehensive summary (2-3 paragraphs) explaining what the bill does, its key provisions, and potential implications
-2. A compelling one-sentence tagline that captures the essence of the bill  
-3. A list of impact areas from this predefined list: ["Agriculture", "Armed Forces", "Civil Rights", "Commerce", "Crime", "Economics", "Education", "Energy", "Environment", "Finance", "Government Operations", "Health", "Housing", "Immigration", "International Affairs", "Labor", "Law", "Native Americans", "Public Lands", "Science", "Social Issues", "Social Security", "Sports", "Taxation", "Technology", "Transportation", "Water Resources"]
+1. A concise overall summary (3-6 sentences) explaining scope and intent.
+2. A compelling one-sentence tagline that captures the essence of the bill.
+3. 3-8 sections based on bill size. Each section must include a short title and 4-6 sentences of explanation.
+4. For each section, include zero or more citations that map to specific parts of the bill text.
+   - If the bill uses numbered sections (e.g., "SEC. 101" or "Section 202"), set sectionId to the numeric part (e.g., "101").
+   - If numbered sections are not present, set sectionId to an EXACT 5-12 word phrase copied verbatim from the bill text that best anchors the cited passage.
+   - The label can be human-friendly (e.g., "SEC. 101" or a short paraphrase), but sectionId MUST be numeric or the exact phrase from the text for reliable matching.
+5. A list of impact areas from this predefined list: ["Agriculture", "Armed Forces", "Civil Rights", "Commerce", "Crime", "Economics", "Education", "Energy", "Environment", "Finance", "Government Operations", "Health", "Housing", "Immigration", "International Affairs", "Labor", "Law", "Native Americans", "Public Lands", "Science", "Social Issues", "Social Security", "Sports", "Taxation", "Technology", "Transportation", "Water Resources"].
 
 Bill Details:
 - Type: ${extractedData.billType.toUpperCase()}
@@ -389,14 +412,20 @@ Bill Details:
 - Committees: ${extractedData.committees.join(", ") || "None"}
 
 Full Bill Text:
-${extractedData.fullText.slice(0, 8000)} ${extractedData.fullText.length > 8000 ? '...' : ''}
+${extractedData.fullText}
 
-Please respond with ONLY a valid JSON object in this exact format:
+Important formatting rules:
+- Return ONLY a valid JSON object (no markdown or prose).
+- Use this exact schema:
 {
-  "summary": "Your comprehensive summary here",
-  "tagLine": "Your one-sentence tagline here",
-  "impactAreas": ["ImpactArea1", "ImpactArea2", "ImpactArea3"]
-}`;
+  "summary": string,
+  "tagLine": string,
+  "impactAreas": string[],
+  "structuredSummary": [
+    { "title": string, "text": string, "citations": [{ "label": string, "sectionId": string }] }
+  ]
+}
+If citations are unavailable for a section, set "citations": [].`;
 
       // Generate text using the agent
       const { thread } = await billAnalysisAgent.createThread(ctx);
@@ -417,7 +446,8 @@ Please respond with ONLY a valid JSON object in this exact format:
         parsedResult = {
           summary: `This ${extractedData.billType.toUpperCase()} ${extractedData.billNumber} (${extractedData.officialTitle}) introduces new federal legislation. The bill contains multiple provisions and would impact various aspects of federal policy if enacted.`,
           tagLine: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber} introduces new federal legislation with multiple policy provisions.`,
-          impactAreas: ["Government Operations", "Law"]
+          impactAreas: ["Government Operations", "Law"],
+          structuredSummary: [],
         };
       }
 
@@ -430,6 +460,21 @@ Please respond with ONLY a valid JSON object in this exact format:
         summary: parsedResult.summary,
         tagLine: parsedResult.tagLine,
         impactAreas: parsedResult.impactAreas,
+        structuredSummary: Array.isArray(parsedResult.structuredSummary)
+          ? (parsedResult.structuredSummary as Array<{ title?: unknown; text?: unknown; citations?: Array<{ label?: unknown; sectionId?: unknown }>; }>)
+              .map((s) => ({
+                title: String(s.title ?? ""),
+                text: String(s.text ?? ""),
+                citations: Array.isArray(s.citations)
+                  ? s.citations
+                      .filter((c) => c && (c.label != null || c.sectionId != null))
+                      .map((c) => ({
+                        label: String(c.label ?? (c.sectionId ? `SEC. ${String(c.sectionId)}` : "")),
+                        sectionId: String(c.sectionId ?? ""),
+                      }))
+                  : [],
+              }))
+          : [],
       };
     } catch (error) {
       console.error("Error generating bill summary:", error);
@@ -438,6 +483,7 @@ Please respond with ONLY a valid JSON object in this exact format:
         summary: `This ${extractedData.billType.toUpperCase()} ${extractedData.billNumber} (${extractedData.officialTitle}) introduces new federal legislation. The bill contains multiple provisions and would impact various aspects of federal policy if enacted.`,
         tagLine: `${extractedData.billType.toUpperCase()} ${extractedData.billNumber} introduces new federal legislation with multiple policy provisions.`,
         impactAreas: ["Government Operations", "Law"],
+        structuredSummary: [],
       };
     }
   },
@@ -525,10 +571,6 @@ export const vectorizeBillData = internalAction({
         { name: "billType", value: extractedData.billType }, 
         { name: "congress", value: extractedData.congress.toString() },  
         { name: "sponsor", value: extractedData.sponsor.name },
-        // Can now easily add more filters without text parsing issues
-        { name: "versionCode", value: extractedData.versionCode },
-        { name: "impactAreas", value: extractedData.impactAreas.join(", ") },
-        { name: "committees", value: extractedData.committees.join(", ") },
       ];
 
       console.log(`Filter values for ${billIdentifier}:`, JSON.stringify(filterValues, null, 2));
@@ -572,6 +614,22 @@ export const storeBillData = internalMutation({
     summary: v.string(),
     tagLine: v.string(),
     impactAreas: v.array(v.string()),
+    structuredSummary: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          text: v.string(),
+          citations: v.optional(
+            v.array(
+              v.object({
+                label: v.string(),
+                sectionId: v.string(),
+              }),
+            ),
+          ),
+        }),
+      ),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -618,6 +676,7 @@ export const storeBillData = internalMutation({
         summary: args.summary,
         tagline: args.tagLine,
         impactAreas: args.impactAreas,
+        structuredSummary: args.structuredSummary,
       });
       billId = existingBill._id;
     } else {
@@ -636,6 +695,7 @@ export const storeBillData = internalMutation({
         summary: args.summary,
         tagline: args.tagLine,
         impactAreas: args.impactAreas,
+        structuredSummary: args.structuredSummary,
       });
     }
 
@@ -656,6 +716,7 @@ export const storeBillData = internalMutation({
         publishedDate: args.actionDate || new Date().toISOString().split('T')[0],
         fullText: args.fullText,
         xmlUrl: args.xmlUrl,
+        textLength: args.fullText.length,
       });
     }
 

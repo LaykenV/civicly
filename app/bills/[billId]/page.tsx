@@ -38,6 +38,11 @@ type BillData = {
   summary?: string;
   changeAnalysis?: string | Array<ChangeAnalysisItem>;
   impactAreas?: string[];
+  structuredSummary?: Array<{
+    title: string;
+    text: string;
+    citations?: Array<{ label: string; sectionId: string }>;
+  }>;
 };
 
 type BillVersionData = {
@@ -893,6 +898,46 @@ const AISummary: React.FC<{
           )}
         </div>
       </div>
+
+      {bill?.structuredSummary && bill.structuredSummary.length > 0 && (
+        <div>
+          <h3
+            className="text-base font-semibold mb-2 tracking-tight"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Key Sections
+          </h3>
+          <div className="space-y-3">
+            {bill.structuredSummary.map((sec, idx) => (
+              <div key={idx} className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-[var(--color-card)]">
+                <div className="px-3 py-2 bg-[var(--color-card-muted)]/70 border-b border-[var(--color-border)] font-medium">
+                  {sec.title}
+                </div>
+                <div className="p-3 text-sm leading-relaxed whitespace-pre-wrap">
+                  {sec.text}
+                </div>
+                {sec.citations && sec.citations.length > 0 && (
+                  <div className="px-3 py-2 border-t border-[var(--color-border)] bg-[var(--color-card)]">
+                    <div className="text-xs text-[var(--color-muted-foreground)] mb-1">Citations</div>
+                    <div className="flex flex-wrap gap-2">
+                      {sec.citations.map((c, i) => (
+                        <button
+                          key={i}
+                          className="px-2 py-1 rounded-full text-xs bg-[var(--color-card-muted)] border border-[var(--color-border)] text-[var(--color-primary)] hover:opacity-90 transition"
+                          onClick={() => onCitationClick(c.sectionId)}
+                          title="Jump to section in Bill Text"
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <h3

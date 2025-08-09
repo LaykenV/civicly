@@ -14,13 +14,10 @@ const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Initialize the RAG component for bill content search
 export const rag = new RAG(components.rag, {
   filterNames: [
-    "billIdentifier", 
-    "billType", 
-    "congress", 
+    "billIdentifier",
+    "billType",
+    "congress",
     "sponsor",
-    "versionCode",
-    "impactAreas",
-    "committees"
   ],
   textEmbeddingModel: openai.embedding("text-embedding-3-small"),
   embeddingDimension: 1536,
@@ -55,6 +52,22 @@ export const getBillInfo = internalQuery({
     billType: v.string(),
     billNumber: v.string(),
     title: v.string(),
+    structuredSummary: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          text: v.string(),
+          citations: v.optional(
+            v.array(
+              v.object({
+                label: v.string(),
+                sectionId: v.string(),
+              }),
+            ),
+          ),
+        }),
+      ),
+    ),
   }), v.null()),
   handler: async (ctx, args) => {
     const bill = await ctx.db.get(args.billId);
@@ -65,6 +78,7 @@ export const getBillInfo = internalQuery({
       billType: bill.billType,
       billNumber: bill.billNumber,
       title: bill.title,
+      structuredSummary: bill.structuredSummary,
     };
   },
 });
@@ -104,11 +118,7 @@ export const searchBills = action({
     const filters = [];
     if (args.billType) filters.push({ name: "billType", value: args.billType });
     if (args.congress) filters.push({ name: "congress", value: args.congress });
-    if (args.impactAreas && args.impactAreas.length > 0) {
-      // Filter bills that contain any of the specified impact areas
-      const impactAreasFilter = args.impactAreas.join(",");
-      filters.push({ name: "impactAreas", value: impactAreasFilter });
-    }
+    // Note: impactAreas filtering disabled at index-time due to component filter slots; still available in metadata
 
     // Perform RAG search with chunked context
     const { results, entries } = await rag.search(ctx, {
@@ -421,11 +431,7 @@ export const generalLegislativeChat = action({
     if (args.context?.congress) {
       filters.push({ name: "congress", value: args.context.congress });
     }
-    if (args.context?.impactAreas && args.context.impactAreas.length > 0) {
-      // Filter bills that contain any of the specified impact areas
-      const impactAreasFilter = args.context.impactAreas.join(",");
-      filters.push({ name: "impactAreas", value: impactAreasFilter });
-    }
+    // Note: impactAreas filtering disabled at index-time due to component filter slots; still available in metadata
     if (args.context?.billTypes) {
       args.context.billTypes.forEach(type => {
         filters.push({ name: "billType", value: type });

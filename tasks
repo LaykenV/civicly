@@ -10,20 +10,23 @@ log warnings
 
 
 Marketing:
-post tech stack
+//post tech stack
+product video
 
 Pipeline:
-test summaries / gemini? / gpt5?
-how to link summary to relevant section in full bill txt? citations? relevant text string?
-summary should be split into sections
-add textLength field to bills
+//test summaries / gemini? / gpt5?
+//how to link summary to relevant section in full bill txt? citations? relevant text string?
+//summary should be split into sections
+//add textLength field to bills
 
 
 bills page:
 ui tweaks - top is foldable, coming soon, header?, dock, floating animation on hover, chat and summary together
 debounce search and highlight
 
-backload data
+sign in page ui
+
+backload data - last 1000 bills?
 MVP LAUNCH
 
 chat with full text? need agent for long bills. ask agent with summary, then ask for vector searches, then use those as context again.

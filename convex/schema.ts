@@ -27,6 +27,22 @@ export default defineSchema({
     summary: v.optional(v.string()), // AI-generated summary of the latest version
     changeAnalysis: v.optional(v.any()), // For "Current vs. Proposed"
     impactAreas: v.optional(v.array(v.string())), // ["Finance", "Healthcare"]
+    structuredSummary: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          text: v.string(),
+          citations: v.optional(
+            v.array(
+              v.object({
+                label: v.string(),
+                sectionId: v.string(),
+              }),
+            ),
+          ),
+        }),
+      ),
+    ),
   })
     // Unique identifier for a bill concept
     .index("by_identifier", ["congress", "billType", "billNumber"])
@@ -41,6 +57,7 @@ export default defineSchema({
     publishedDate: v.string(),
     fullText: v.string(),          // The full text of THIS version
     xmlUrl: v.string(),            // The source URL from govinfo.gov
+    textLength: v.optional(v.number()), // Length of fullText, used for prompt decisions
   })
     .index("by_billId_and_version", ["billId", "versionCode"])
     .index("by_xmlUrl", ["xmlUrl"])
