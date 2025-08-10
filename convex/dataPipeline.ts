@@ -331,6 +331,48 @@ export const ingestAndEnrichBillFile = internalAction({
         }
       });
 
+      // Validate summary quality — require a non-empty summary
+      const isEmptyString = (s: string | undefined) => !s || s.trim().length === 0;
+      const structured = Array.isArray(summaryData.structuredSummary) ? summaryData.structuredSummary : [];
+      const summaryLooksBad = isEmptyString(summaryData.summary) || summaryData.summary.length < 40; // heuristic floor
+
+      if (summaryLooksBad) {
+        await ctx.runMutation(internal.dataPipeline.recordFailedIngestion, {
+          congress: extractedData.congress,
+          billType: extractedData.billType,
+          billNumber: extractedData.billNumber,
+          versionCode: extractedData.versionCode,
+          xmlUrl: extractedData.xmlUrl,
+          reason: "Summary missing or too short",
+          summaryAttempt: {
+            summary: summaryData.summary,
+            tagLine: summaryData.tagLine,
+            impactAreas: summaryData.impactAreas,
+            structuredSummary: structured,
+          },
+        });
+        return null; // Abort: do not vectorize or store bill/version
+      }
+
+      // Optional: also mark as failed if structured summary is empty; keep as soft gate
+      if (structured.length === 0) {
+        await ctx.runMutation(internal.dataPipeline.recordFailedIngestion, {
+          congress: extractedData.congress,
+          billType: extractedData.billType,
+          billNumber: extractedData.billNumber,
+          versionCode: extractedData.versionCode,
+          xmlUrl: extractedData.xmlUrl,
+          reason: "Structured summary empty",
+          summaryAttempt: {
+            summary: summaryData.summary,
+            tagLine: summaryData.tagLine,
+            impactAreas: summaryData.impactAreas,
+            structuredSummary: structured,
+          },
+        });
+         return null;
+      }
+
       // Update extracted data with AI-generated content
       extractedData.summary = summaryData.summary;
       extractedData.tagLine = summaryData.tagLine;
@@ -367,6 +409,55 @@ export const ingestAndEnrichBillFile = internalAction({
       console.error(`Error processing ${args.xmlUrl}:`, error);
       return null;
     }
+  },
+});
+
+// Record failed ingestion attempts to avoid polluting main tables
+export const recordFailedIngestion = internalMutation({
+  args: {
+    congress: v.number(),
+    billType: v.string(),
+    billNumber: v.string(),
+    versionCode: v.string(),
+    xmlUrl: v.string(),
+    reason: v.string(),
+    summaryAttempt: v.optional(
+      v.object({
+        summary: v.optional(v.string()),
+        tagLine: v.optional(v.string()),
+        impactAreas: v.optional(v.array(v.string())),
+        structuredSummary: v.optional(
+          v.array(
+            v.object({
+              title: v.string(),
+              text: v.string(),
+              citations: v.optional(
+                v.array(
+                  v.object({
+                    label: v.string(),
+                    sectionId: v.string(),
+                  }),
+                ),
+              ),
+            }),
+          ),
+        ),
+      }),
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.insert("failedIngestions", {
+      congress: args.congress,
+      billType: args.billType,
+      billNumber: args.billNumber,
+      versionCode: args.versionCode,
+      xmlUrl: args.xmlUrl,
+      reason: args.reason,
+      summaryAttempt: args.summaryAttempt,
+      createdAt: Date.now(),
+    });
+    return null;
   },
 });
 

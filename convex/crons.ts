@@ -3,12 +3,12 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Run bill discovery every 4 hours
+// Run durable data pipeline workflow every 4 hours
 crons.interval(
-  "discover new bills",
+  "data pipeline workflow",
   { hours: 4 },
-  internal.dataPipeline.discoverNewBillFilesCron,
-  {}
+  internal.workflows.runDataPipelineCron,
+  { maxFiles: 200, interBatchDelayMs: 1500 },
 );
 
 export default crons;

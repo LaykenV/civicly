@@ -135,5 +135,39 @@ export default defineSchema({
     })),
     timestamp: v.number(),
   }).index("by_timestamp", ["timestamp"]),
+
+  // --- Failure tracking for ingestion/summarization ---
+  failedIngestions: defineTable({
+    congress: v.number(),
+    billType: v.string(),
+    billNumber: v.string(),
+    versionCode: v.string(),
+    xmlUrl: v.string(),
+    reason: v.string(),
+    summaryAttempt: v.optional(v.object({
+      summary: v.optional(v.string()),
+      tagLine: v.optional(v.string()),
+      impactAreas: v.optional(v.array(v.string())),
+      structuredSummary: v.optional(
+        v.array(
+          v.object({
+            title: v.string(),
+            text: v.string(),
+            citations: v.optional(
+              v.array(
+                v.object({
+                  label: v.string(),
+                  sectionId: v.string(),
+                }),
+              ),
+            ),
+          }),
+        ),
+      ),
+    })),
+    createdAt: v.number(),
+  })
+    .index("by_xmlUrl", ["xmlUrl"]) 
+    .index("by_identifier", ["congress", "billType", "billNumber", "versionCode"]),
   
 });
