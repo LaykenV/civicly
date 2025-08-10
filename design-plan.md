@@ -9,13 +9,25 @@
     - **A. Color Palette:**
         - **Primary (Brand & Interactive):** Royal Blue: #4263EB (for links, active tabs, primary buttons).
         - **Backgrounds:**
-            - **Light Mode:** Alabaster: #FAFAFA
+            - **Light Mode (refined):**
+              - Background Start: #EEF2F9 (hsl(225, 40%, 95%))
+              - Background End: #E6EAF4 (hsl(225, 36%, 92%))
+              - Card (translucent): rgba(255, 255, 255, 0.86)
+              - Card (solid surfaces): #F1F3F9 (hsl(225, 33%, 96%))
             - **Dark Mode:** Very Dark Blue: #1A202C
         - **Text:**
-            - **Light Mode:** Charcoal: #2D3748
+            - **Light Mode:**
+              - Primary: #1F2430 (hsl(230, 22%, 15%))
+              - Headings: #171B24 (hsl(230, 24%, 12%))
+              - Muted: #5A5F6B (hsl(230, 12%, ~38%))
+              - Placeholder: #747988 (hsl(230, 12%, ~48%))
             - **Dark Mode:** Light Gray: #A0AEC0
         - **Accent (CTA & Pro Features):** Gold: #D69E2E. Used for high-value actions like "Analyze Impact on Me" and subscription buttons.
         - **Status Indicators:** Green (Passed), Orange (In Committee), Red (Failed).
+        - **Borders & UI (Light Mode):**
+            - Borders: rgba(0, 0, 0, 0.14)
+            - Subtle Dividers: hsl(230, 16%, 84%)
+            - Hover Backgrounds: hsl(230, 18%, 92%)
     - **B. Typography:**
         - **Headings:** Lora (Serif font for authority and readability).
         - **Body/UI Text:** Inter (Sans-Serif font for clarity on screens).

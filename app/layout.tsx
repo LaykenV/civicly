@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: "Civicly - Making Complex Legislation Accessible",
-  description: "Civicly makes complex legislative information accessible, credible, and empowering for the average citizen. AI-powered bill analysis, semantic search, and real-time legislative tracking.",
+  description:
+    "Civicly makes complex legislative information accessible, credible, and empowering for the average citizen. AI-powered bill analysis, semantic search, and real-time legislative tracking.",
   keywords: [
     "legislation",
     "bills",
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
     "civic engagement",
     "government",
     "AI analysis",
-    "legislative tracking"
+    "legislative tracking",
   ],
   authors: [{ name: "Civicly Team" }],
   creator: "Civicly",
@@ -62,17 +64,19 @@ export default function RootLayout({
 }>) {
   return (
     <ConvexAuthNextjsServerProvider>
-      <html lang="en" className="scroll-smooth">
+      <html lang="en" className="scroll-smooth" suppressHydrationWarning>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         </head>
-        <body className="font-body antialiased bg-background text-foreground min-h-screen">
-          <ConvexClientProvider>
-            <div id="root" className="relative">
-              {children}
-            </div>
-          </ConvexClientProvider>
+        <body className="font-body antialiased min-h-screen">
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <ConvexClientProvider>
+              <div id="root" className="relative">
+                {children}
+              </div>
+            </ConvexClientProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ConvexAuthNextjsServerProvider>

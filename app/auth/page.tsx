@@ -31,8 +31,8 @@ export default function AuthPage() {
       <Header />
       <main className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden">
         {/* Background accents */}
-        <div aria-hidden className="pointer-events-none absolute -top-28 -left-24 h-[28rem] w-[28rem] rounded-full blur-3xl bg-[hsl(233_85%_60%)]/20" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-16 h-[24rem] w-[24rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/18" />
+        <div aria-hidden className="pointer-events-none absolute -top-28 -left-24 h-[28rem] w-[28rem] rounded-full blur-3xl bg-[var(--color-primary)]/20" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-16 h-[24rem] w-[24rem] rounded-full blur-3xl bg-[var(--color-accent)]/18" />
 
         <div className="w-full max-w-md">
           {/* Back button */}
@@ -40,7 +40,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-sm text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] hover:text-[hsl(43_74%_52%)] dark:hover:text-[hsl(43_74%_65%)] hover:bg-[hsl(230_10%_94%)/0.7] dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 cursor-pointer"
+              className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-sm text-[var(--color-muted)] hover:text-[var(--color-accent)] hover:bg-[var(--color-hover-bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 cursor-pointer"
               aria-label="Go back"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
@@ -50,27 +50,26 @@ export default function AuthPage() {
             </button>
           </div>
 
-
           {/* Card */}
-          <div className="rounded-2xl p-6 md:p-7 bg-white/85 dark:bg-white/[0.06] border border-black/5 dark:border-white/10 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <div className="rounded-2xl p-6 md:p-7 bg-[var(--color-card)] border border-[var(--color-border)] shadow-[0_24px_60px_-28px_rgba(0,0,0,0.35)] backdrop-blur-xl">
             <div className="text-center mb-5">
-              <h2 className="text-xl md:text-2xl font-heading font-semibold text-[hsl(230_16%_14%)] dark:text-white">
+              <h2 className="text-xl md:text-2xl font-heading font-semibold text-[var(--color-foreground-dark)]">
                 {flow === "signIn" ? "Welcome back" : "Create your account"}
               </h2>
-              <p className="mt-2 text-sm text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85">
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
                 {flow === "signIn" ? "Sign in to continue" : "Join to track and understand bills"}
               </p>
             </div>
 
             {/* OAuth */}
             <button
-              className="group relative w-full bg-[hsl(220_28%_12%)] text-white border border-white/10 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2 overflow-hidden transition-colors hover:border-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 cursor-pointer"
+              className="group btn-oauth"
               onClick={() => {
                 setError(null);
                 void signIn("google").catch((err) => setError(err.message));
               }}
             >
-              <span className="pointer-events-none absolute left-[-150%] top-0 h-full w-[200%] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.18),transparent)] transition-all duration-700 ease-out group-hover:left-[150%]" />
+              <span className="pointer-events-none absolute left-[-150%] top-0 h-full w-[200%] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)] dark:bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.18),transparent)] transition-all duration-700 ease-out group-hover:left-[150%]" />
               <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden>
                 <path fill="#EA4335" d="M21.6 12c0-.98-.08-1.7-.25-2.46H12v4.32h5.4c-.11.9-.73 2.26-2.1 3.17l3.24 2.51C20.47 18.1 21.6 15.3 21.6 12z" />
                 <path fill="#34A853" d="M12 21.6c2.7 0 4.96-.9 6.61-2.45l-3.24-2.51c-.9.6-2.08.96-3.37.96-2.6 0-4.81-1.75-5.6-4.1H2.99v2.58A9.6 9.6 0 0 0 12 21.6z" />
@@ -82,9 +81,9 @@ export default function AuthPage() {
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
-              <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">or</span>
-              <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+              <div className="flex-1 h-px bg-[var(--color-border)]" />
+              <span className="text-xs text-[var(--color-muted)]">or</span>
+              <div className="flex-1 h-px bg-[var(--color-border)]" />
             </div>
 
             {/* Form */}
@@ -92,7 +91,7 @@ export default function AuthPage() {
               <label className="sr-only" htmlFor="email">Email</label>
               <input
                 id="email"
-                className="bg-white/80 dark:bg-white/[0.04] text-foreground rounded-lg px-3 py-2.5 border-2 border-transparent focus:border-[hsl(233_85%_60%)]/60 focus:outline-none placeholder:text-[hsl(230_12%_55%)]/85 dark:placeholder:text-[hsl(220_12%_78%)]/70"
+                className="bg-[var(--color-card)] text-[var(--color-foreground-light)] rounded-lg px-3 py-2.5 border-2 border-transparent focus:border-[var(--color-primary)]/60 focus:outline-none placeholder:text-[var(--color-placeholder)]"
                 type="email"
                 name="email"
                 placeholder="Email"
@@ -102,7 +101,7 @@ export default function AuthPage() {
               <label className="sr-only" htmlFor="password">Password</label>
               <input
                 id="password"
-                className="bg-white/80 dark:bg-white/[0.04] text-foreground rounded-lg px-3 py-2.5 border-2 border-transparent focus:border-[hsl(233_85%_60%)]/60 focus:outline-none placeholder:text-[hsl(230_12%_55%)]/85 dark:placeholder:text-[hsl(220_12%_78%)]/70"
+                className="bg-[var(--color-card)] text-[var(--color-foreground-light)] rounded-lg px-3 py-2.5 border-2 border-transparent focus:border-[var(--color-primary)]/60 focus:outline-none placeholder:text-[var(--color-placeholder)]"
                 type="password"
                 name="password"
                 placeholder="Password"
@@ -116,11 +115,11 @@ export default function AuthPage() {
 
             {/* Switch + Error */}
             <div className="flex items-center justify-center gap-2 mt-4 text-sm">
-              <span className="text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85">
+              <span className="text-[var(--color-muted)]">
                 {flow === "signIn" ? "Don't have an account?" : "Already have an account?"}
               </span>
               <button
-                className="text-[hsl(233_85%_55%)] hover:text-[hsl(233_85%_60%)] dark:text-[hsl(233_85%_65%)] dark:hover:text-[hsl(233_85%_72%)] underline decoration-from-font underline-offset-2"
+                className="text-[var(--color-primary-55)] hover:text-[var(--color-primary)] underline decoration-from-font underline-offset-2"
                 onClick={() => setFlow(flow === "signIn" ? "signUp" : "signIn")}
               >
                 {flow === "signIn" ? "Sign up instead" : "Sign in instead"}
@@ -128,8 +127,8 @@ export default function AuthPage() {
             </div>
 
             {error && (
-              <div className="mt-4 bg-[hsl(351_83%_10%)]/5 dark:bg-[hsl(351_83%_10%)]/40 border-2 border-[hsl(351_83%_55%)]/30 rounded-lg p-3">
-                <p className="text-[hsl(351_83%_25%)] dark:text-[hsl(351_83%_65%)] text-xs font-mono">
+              <div className="mt-4 bg-[var(--color-error-bg)] border-2 border-[var(--color-error-border)] rounded-lg p-3">
+                <p className="text-[var(--color-error-text)] text-xs font-mono">
                   Error: {error}
                 </p>
               </div>
@@ -137,7 +136,7 @@ export default function AuthPage() {
           </div>
 
           {/* Footer hint */}
-          <p className="mt-4 text-center text-xs text-[hsl(230_12%_45%)]/85 dark:text-[hsl(220_12%_78%)]/80">
+          <p className="mt-4 text-center text-xs text-[var(--color-muted)]">
             By continuing, you agree to our Terms and Privacy Policy.
           </p>
         </div>

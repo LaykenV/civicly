@@ -41,220 +41,220 @@ const IMPACT_COLORS: Record<
   }
 > = {
   Agriculture: {
-    light: "bg-lime-100/70",
-    dark: "bg-lime-400/10",
-    textLight: "text-lime-900",
-    textDark: "text-lime-300",
-    borderLight: "border-lime-200",
-    borderDark: "border-lime-300/20",
+    light: "bg-[color:var(--color-success-bg)]/40",
+    dark: "bg-[color:var(--color-success-bg)]/10",
+    textLight: "text-[color:var(--color-success-text)]",
+    textDark: "text-[color:var(--color-success-text)]",
+    borderLight: "border-[color:var(--color-success-border)]",
+    borderDark: "border-[color:var(--color-success-border)]/20",
   },
   "Armed Forces": {
-    light: "bg-slate-100/70",
-    dark: "bg-slate-400/10",
-    textLight: "text-slate-900",
-    textDark: "text-slate-300",
-    borderLight: "border-slate-200",
-    borderDark: "border-slate-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Civil Rights": {
-    light: "bg-rose-100/70",
-    dark: "bg-rose-400/10",
-    textLight: "text-rose-900",
-    textDark: "text-rose-300",
-    borderLight: "border-rose-200",
-    borderDark: "border-rose-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Commerce: {
-    light: "bg-amber-100/70",
-    dark: "bg-amber-400/10",
-    textLight: "text-amber-900",
-    textDark: "text-amber-300",
-    borderLight: "border-amber-200",
-    borderDark: "border-amber-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Crime: {
-    light: "bg-rose-100/70",
-    dark: "bg-rose-400/10",
-    textLight: "text-rose-900",
-    textDark: "text-rose-300",
-    borderLight: "border-rose-200",
-    borderDark: "border-rose-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Economics: {
-    light: "bg-emerald-100/70",
-    dark: "bg-emerald-400/10",
-    textLight: "text-emerald-900",
-    textDark: "text-emerald-300",
-    borderLight: "border-emerald-200",
-    borderDark: "border-emerald-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Education: {
-    light: "bg-sky-100/70",
-    dark: "bg-sky-400/10",
-    textLight: "text-sky-900",
-    textDark: "text-sky-300",
-    borderLight: "border-sky-200",
-    borderDark: "border-sky-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Energy: {
-    light: "bg-orange-100/70",
-    dark: "bg-orange-400/10",
-    textLight: "text-orange-900",
-    textDark: "text-orange-300",
-    borderLight: "border-orange-200",
-    borderDark: "border-orange-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Environment: {
-    light: "bg-emerald-100/70",
-    dark: "bg-emerald-400/10",
-    textLight: "text-emerald-900",
-    textDark: "text-emerald-300",
-    borderLight: "border-emerald-200",
-    borderDark: "border-emerald-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Finance: {
-    light: "bg-indigo-100/70",
-    dark: "bg-indigo-400/10",
-    textLight: "text-indigo-900",
-    textDark: "text-indigo-300",
-    borderLight: "border-indigo-200",
-    borderDark: "border-indigo-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Government Operations": {
-    light: "bg-violet-100/70",
-    dark: "bg-violet-400/10",
-    textLight: "text-violet-900",
-    textDark: "text-violet-300",
-    borderLight: "border-violet-200",
-    borderDark: "border-violet-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Health: {
-    light: "bg-red-100/70",
-    dark: "bg-red-400/10",
-    textLight: "text-red-900",
-    textDark: "text-red-300",
-    borderLight: "border-red-200",
-    borderDark: "border-red-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Housing: {
-    light: "bg-fuchsia-100/70",
-    dark: "bg-fuchsia-400/10",
-    textLight: "text-fuchsia-900",
-    textDark: "text-fuchsia-300",
-    borderLight: "border-fuchsia-200",
-    borderDark: "border-fuchsia-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Immigration: {
-    light: "bg-teal-100/70",
-    dark: "bg-teal-400/10",
-    textLight: "text-teal-900",
-    textDark: "text-teal-300",
-    borderLight: "border-teal-200",
-    borderDark: "border-teal-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "International Affairs": {
-    light: "bg-cyan-100/70",
-    dark: "bg-cyan-400/10",
-    textLight: "text-cyan-900",
-    textDark: "text-cyan-300",
-    borderLight: "border-cyan-200",
-    borderDark: "border-cyan-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Labor: {
-    light: "bg-yellow-100/70",
-    dark: "bg-yellow-400/10",
-    textLight: "text-yellow-900",
-    textDark: "text-yellow-300",
-    borderLight: "border-yellow-200",
-    borderDark: "border-yellow-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Law: {
-    light: "bg-stone-100/70",
-    dark: "bg-stone-400/10",
-    textLight: "text-stone-900",
-    textDark: "text-stone-300",
-    borderLight: "border-stone-200",
-    borderDark: "border-stone-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Native Americans": {
-    light: "bg-amber-100/70",
-    dark: "bg-amber-400/10",
-    textLight: "text-amber-900",
-    textDark: "text-amber-300",
-    borderLight: "border-amber-200",
-    borderDark: "border-amber-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Public Lands": {
-    light: "bg-green-100/70",
-    dark: "bg-green-400/10",
-    textLight: "text-green-900",
-    textDark: "text-green-300",
-    borderLight: "border-green-200",
-    borderDark: "border-green-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Science: {
-    light: "bg-purple-100/70",
-    dark: "bg-purple-400/10",
-    textLight: "text-purple-900",
-    textDark: "text-purple-300",
-    borderLight: "border-purple-200",
-    borderDark: "border-purple-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Social Issues": {
-    light: "bg-pink-100/70",
-    dark: "bg-pink-400/10",
-    textLight: "text-pink-900",
-    textDark: "text-pink-300",
-    borderLight: "border-pink-200",
-    borderDark: "border-pink-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Social Security": {
-    light: "bg-blue-100/70",
-    dark: "bg-blue-400/10",
-    textLight: "text-blue-900",
-    textDark: "text-blue-300",
-    borderLight: "border-blue-200",
-    borderDark: "border-blue-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Sports: {
-    light: "bg-emerald-100/70",
-    dark: "bg-emerald-400/10",
-    textLight: "text-emerald-900",
-    textDark: "text-emerald-300",
-    borderLight: "border-emerald-200",
-    borderDark: "border-emerald-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Taxation: {
-    light: "bg-orange-100/70",
-    dark: "bg-orange-400/10",
-    textLight: "text-orange-900",
-    textDark: "text-orange-300",
-    borderLight: "border-orange-200",
-    borderDark: "border-orange-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Technology: {
-    light: "bg-cyan-100/70",
-    dark: "bg-cyan-400/10",
-    textLight: "text-cyan-900",
-    textDark: "text-cyan-300",
-    borderLight: "border-cyan-200",
-    borderDark: "border-cyan-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   Transportation: {
-    light: "bg-indigo-100/70",
-    dark: "bg-indigo-400/10",
-    textLight: "text-indigo-900",
-    textDark: "text-indigo-300",
-    borderLight: "border-indigo-200",
-    borderDark: "border-indigo-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
   "Water Resources": {
-    light: "bg-sky-100/70",
-    dark: "bg-sky-400/10",
-    textLight: "text-sky-900",
-    textDark: "text-sky-300",
-    borderLight: "border-sky-200",
-    borderDark: "border-sky-300/20",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-muted-dark)]",
+    textDark: "text-[var(--color-muted)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   },
 };
 
@@ -262,7 +262,7 @@ const IMPACT_COLORS: Record<
 
 export default function Homepage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,hsl(230_60%_99%),hsl(230_52%_98%)_30%,hsl(230_46%_97%))] dark:bg-[linear-gradient(180deg,hsl(220_30%_12%),hsl(220_28%_10%)_35%,hsl(220_26%_9%))] overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden" style={{ background: "linear-gradient(180deg, var(--color-background), var(--color-background-end) 30%)" }}>
       <Header />
       <HeroSection />
       <LatestBillsSection />
@@ -284,12 +284,12 @@ function useDebounce<T>(value: T, delay: number): T {
 
 function ImpactChip({ label }: { label: string }) {
   const c = IMPACT_COLORS[label] ?? {
-    light: "bg-[hsl(233_85%_60%)]/12",
-    dark: "bg-white/[0.08]",
-    textLight: "text-[hsl(233_85%_45%)]",
-    textDark: "text-white/90",
-    borderLight: "border-black/5",
-    borderDark: "border-white/10",
+    light: "bg-[var(--color-card)]",
+    dark: "bg-[var(--color-card)]",
+    textLight: "text-[var(--color-primary-55)]",
+    textDark: "text-[var(--color-foreground)]",
+    borderLight: "border-[var(--color-border)]",
+    borderDark: "border-[var(--color-border)]",
   };
 
   return (
@@ -298,10 +298,7 @@ function ImpactChip({ label }: { label: string }) {
         "text-[10px] px-2 py-0.5 rounded-full border",
         c.light,
         c.textLight,
-        c.borderLight,
-        "dark:" + c.dark,
-        "dark:" + c.textDark,
-        "dark:" + c.borderDark
+        c.borderLight
       )}
     >
       {label}
@@ -343,26 +340,26 @@ function HeroSection() {
   // Added a subtle texture layer + larger top/bottom space for prime focus.
   return (
     <section className="relative min-h-[60vh] sm:min-h-[70vh] flex items-center px-4 sm:px-6 lg:px-8 py-20 md:py-24 mt-16">
-      <div aria-hidden className="pointer-events-none absolute -top-40 -left-24 h-[28rem] w-[28rem] rounded-full blur-3xl bg-[hsl(233_85%_60%)]/25" />
-      <div aria-hidden className="pointer-events-none absolute -top-16 right-0 h-[22rem] w-[22rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/18" />
+      <div aria-hidden className="pointer-events-none absolute -top-40 -left-24 h-[28rem] w-[28rem] rounded-full blur-3xl bg-[var(--color-primary)]/25" />
+      <div aria-hidden className="pointer-events-none absolute -top-16 right-0 h-[22rem] w-[22rem] rounded-full blur-3xl bg-[var(--color-accent)]/18" />
       <div aria-hidden className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_5%,black,transparent)]">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(233_85%_60%)]/40 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent" />
       </div>
 
       <div className="max-w-6xl mx-auto text-center relative w-full">
-        <span className="inline-flex items-center gap-2 text-xs md:text-sm font-medium rounded-full px-3 py-1 bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
-          <span className="inline-block h-2 w-2 rounded-full bg-[hsl(233_85%_60%)] animate-pulse" />
+        <span className="inline-flex items-center gap-2 text-xs md:text-sm font-medium rounded-full px-3 py-1 bg-[var(--color-card)] border border-[var(--color-border)] text-[var(--color-muted)] backdrop-blur">
+          <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
           Live legislative insights updated daily
         </span>
 
         <h1 className="mt-8 md:mt-10 text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-[1.05] tracking-tight">
-          <span className="inline-block pr-[0.04em] bg-clip-text text-transparent bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]">
+          <span className="inline-block pr-[0.04em] bg-clip-text text-transparent bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))]">
             Understand Congress,
           </span>{" "}
           instantly.
         </h1>
 
-        <p className="mt-6 md:mt-8 text-base md:text-xl text-[hsl(230_12%_30%)]/85 dark:text-[hsl(220_12%_78%)]/85 max-w-3xl mx-auto">
+        <p className="mt-6 md:mt-8 text-base md:text-xl text-[var(--color-muted-darker)]/85 max-w-3xl mx-auto">
           Search thousands of bills with natural language. See summaries, sponsors, status, and impact—fast.
         </p>
 
@@ -380,34 +377,34 @@ function SearchResultCard({ result, onClick }: { result: BillSearchResult; onCli
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-4 rounded-xl transition-colors border border-black/5 dark:border-white/10 hover:border-[hsl(233_85%_60%)]/35 hover:bg-white dark:hover:bg-white/[0.06] bg-white/80 dark:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60"
+      className="w-full text-left p-4 rounded-xl transition-colors border border-[var(--color-border)] hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-card)] bg-[var(--color-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60"
     >
       <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex-1 min-w-0">
-          <div className="text-[11px] uppercase tracking-wide text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mb-1">
+          <div className="text-[11px] uppercase tracking-wide text-[var(--color-muted)] mb-1">
             {result.congress}th • {result.billType.toUpperCase()} {result.billNumber}
           </div>
-          <h3 className="text-sm font-semibold text-[hsl(230_16%_20%)] dark:text-white/90 line-clamp-2">
+          <h3 className="text-sm font-semibold text-[var(--color-foreground-dark)] line-clamp-2">
             {result.title}
           </h3>
           {result.tagline && (
-            <p className="mt-1 text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 italic line-clamp-1">
+            <p className="mt-1 text-xs text-[var(--color-muted-dark)]/85 italic line-clamp-1">
               {result.tagline}
             </p>
           )}
         </div>
         <div className="flex-shrink-0 flex flex-col items-end gap-1">
-          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[hsl(233_85%_60%)]/15 dark:bg-white/[0.08] text-[10px] text-[hsl(233_85%_45%)] dark:text-white/80">
+          <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-primary)]/15 text-[10px] text-[var(--color-primary-55)]">
             {(result.relevanceScore * 100).toFixed(0)}% match
           </span>
-          <span className="text-[10px] text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+          <span className="text-[10px] text-[var(--color-muted)]">
             {result.relevantChunks} section{result.relevantChunks !== 1 ? "s" : ""}
           </span>
         </div>
       </div>
 
       {result.sponsor && (
-        <div className="text-xs text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mt-2">
+        <div className="text-xs text-[var(--color-muted-dark)] mt-2">
           <span className="font-medium">Sponsor:</span> {result.sponsor.name}
           {result.sponsor.party && result.sponsor.state && (
             <span className="text-xs"> ({result.sponsor.party}-{result.sponsor.state})</span>
@@ -421,14 +418,14 @@ function SearchResultCard({ result, onClick }: { result: BillSearchResult; onCli
             <ImpactChip key={i} label={area} />
           ))}
           {result.impactAreas.length > 4 && (
-            <span className="text-[10px] text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+            <span className="text-[10px] text-[var(--color-muted)]">
               +{result.impactAreas.length - 4} more
             </span>
           )}
         </div>
       )}
 
-      <div className="mt-2 text-xs text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85 line-clamp-2">
+      <div className="mt-2 text-xs text-[var(--color-muted)] line-clamp-2">
         {result.bestMatchText}
       </div>
     </button>
@@ -568,8 +565,8 @@ function HeroSearch() {
       <div
         className={cn(
           "relative rounded-2xl p-3 md:p-4",
-          "bg-white/85 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-          "shadow-[0_18px_44px_-24px_rgba(0,0,0,0.35)] backdrop-blur-xl"
+          "bg-[var(--color-card)] border border-[var(--color-border)]",
+          "shadow-xl backdrop-blur-xl"
         )}
       >
         <label htmlFor="main-search" className="sr-only">
@@ -579,10 +576,10 @@ function HeroSearch() {
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             {isSearching ? (
-              <div className="animate-spin h-5 w-5 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
+              <div className="animate-spin h-5 w-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full" />
             ) : (
               <svg
-                className="h-5 w-5 text-[hsl(230_12%_52%)] dark:text-[hsl(220_12%_72%)]"
+                className="h-5 w-5 text-[var(--color-muted-lighter)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -601,9 +598,9 @@ function HeroSearch() {
             className={cn(
               "w-full rounded-xl border-2 border-transparent bg-transparent",
               "pl-12 pr-28 py-3.5 md:py-4 text-base md:text-lg",
-              "placeholder:text-[hsl(230_12%_55%)]/85 dark:placeholder:text-[hsl(220_12%_78%)]/70",
-              "text-[hsl(230_16%_16%)] dark:text-[hsl(220_12%_94%)]",
-              "focus:outline-none focus:border-[hsl(233_85%_60%)]/70",
+              "placeholder:text-[var(--color-placeholder)]",
+              "text-[var(--color-foreground-light)]",
+              "focus:outline-none focus:border-[var(--color-primary)]/70",
               "input-placeholder-typewriter"
             )}
             placeholder={typedPlaceholder}
@@ -618,7 +615,7 @@ function HeroSearch() {
                 setShowDropdown(false);
                 setSearchResults(null);
               }}
-              className="absolute inset-y-0 right-14 pr-2 flex items-center text-[hsl(230_12%_52%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white focus:outline-none"
+              className="absolute inset-y-0 right-14 pr-2 flex items-center text-[var(--color-muted-lighter)] hover:text-[var(--color-foreground)] focus:outline-none"
               aria-label="Clear search"
               title="Clear"
             >
@@ -626,7 +623,7 @@ function HeroSearch() {
             </button>
           )}
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <kbd className="inline-flex items-center rounded-md border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/[0.06] px-2 py-1 text-xs text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_78%)] backdrop-blur">
+            <kbd className="inline-flex items-center rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1 text-xs text-[var(--color-muted)] backdrop-blur">
               ⌘K
             </kbd>
           </div>
@@ -636,19 +633,19 @@ function HeroSearch() {
       {/* Dropdown results */}
       {showDropdown && (
         <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-50 max-w-full">
-          <div className="rounded-2xl p-3 md:p-4 bg-white dark:bg-[hsl(220_28%_12%)]/95 border border-black/5 dark:border-white/10 shadow-[0_28px_64px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <div className="rounded-2xl p-3 md:p-4 bg-[var(--color-card-solid)] border border-[var(--color-border)] shadow-xl backdrop-blur-xl">
             {isSearching && (
-              <div className="p-4 flex items-center gap-3 text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/85">
-                <div className="animate-spin h-4 w-4 border-2 border-[hsl(233_85%_60%)] border-t-transparent rounded-full" />
+              <div className="p-4 flex items-center gap-3 text-sm text-[var(--color-muted)]">
+                <div className="animate-spin h-4 w-4 border-2 border-[var(--color-primary)] border-t-transparent rounded-full" />
                 Searching bills…
               </div>
             )}
 
             {!isSearching && searchResults?.summary && (
-              <div className="mb-3 md:mb-4 p-3 rounded-lg bg-[hsl(233_85%_60%)]/10 dark:bg-white/[0.06]">
-                <p className="text-sm text-[hsl(233_85%_45%)] dark:text-white/90">{searchResults.summary}</p>
+              <div className="mb-3 md:mb-4 p-3 rounded-lg bg-[var(--color-primary)]/10">
+                <p className="text-sm text-[var(--color-primary-55)]">{searchResults.summary}</p>
                 {searchResults.totalChunks > 0 && (
-                  <p className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80 mt-1">
+                  <p className="text-xs text-[var(--color-muted)] mt-1">
                     Searched {searchResults.totalChunks} sections of legislative text
                   </p>
                 )}
@@ -657,7 +654,7 @@ function HeroSearch() {
 
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               {!isSearching && (!searchResults || searchResults.results.length === 0) && (
-                <div className="p-8 text-center text-sm text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+                <div className="p-8 text-center text-sm text-[var(--color-muted)]">
                   No results yet. Try “farm bill subsidies” or “student loan forgiveness”.
                 </div>
               )}
@@ -701,15 +698,15 @@ function LatestBillsSection() {
   return (
     <section id="bills" className="relative py-4 md:py-6 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-[50rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/12" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-[50rem] rounded-full blur-3xl bg-[var(--color-accent)]/12" />
       </div>
 
       <div className="max-w-7xl mx-auto">
         <div className="text-left mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight text-[hsl(230_16%_14%)] dark:text-white">
+          <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight text-[var(--color-foreground-dark)]">
             Latest Bills
           </h2>
-          <p className="mt-2 text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85">
+          <p className="mt-2 text-[var(--color-muted)]">
             Fresh updates, clean summaries, and easy tracking.
           </p>
         </div>
@@ -723,14 +720,14 @@ function LatestBillsSection() {
                   <div
                     className={cn(
                       "rounded-2xl p-6 h-full",
-                      "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+                      "bg-[var(--color-card)] border border-[var(--color-border)]",
                       "animate-pulse"
                     )}
                   >
-                    <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3 mb-3" />
-                    <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-3/4 mb-3" />
-                    <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-full mb-2" />
-                    <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3" />
+                    <div className="h-3 bg-[var(--color-border-light)] rounded w-1/3 mb-3" />
+                    <div className="h-5 bg-[var(--color-border-light)] rounded w-3/4 mb-3" />
+                    <div className="h-4 bg-[var(--color-border-light)] rounded w-full mb-2" />
+                    <div className="h-4 bg-[var(--color-border-light)] rounded w-2/3" />
                   </div>
                 </div>
               ))}
@@ -743,21 +740,21 @@ function LatestBillsSection() {
                   key={i}
                   className={cn(
                     "rounded-2xl p-6",
-                    "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
+                    "bg-[var(--color-card)] border border-[var(--color-border)]",
                     "animate-pulse"
                   )}
                 >
-                  <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3 mb-3" />
-                  <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-3/4 mb-3" />
-                  <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-full mb-2" />
-                  <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3" />
+                  <div className="h-3 bg-[var(--color-border-light)] rounded w-1/3 mb-3" />
+                  <div className="h-5 bg-[var(--color-border-light)] rounded w-3/4 mb-3" />
+                  <div className="h-4 bg-[var(--color-border-light)] rounded w-full mb-2" />
+                  <div className="h-4 bg-[var(--color-border-light)] rounded w-2/3" />
                 </div>
               ))}
             </div>
           </>
         ) : bills.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[hsl(230_12%_40%)]/85 dark:text-[hsl(220_12%_78%)]/85 text-lg">
+            <p className="text-[var(--color-muted)] text-lg">
               No bills found. Check back soon for updates.
             </p>
           </div>
@@ -785,7 +782,7 @@ function LatestBillsSection() {
                       key={index}
                       className={cn(
                         "transition-all duration-300 rounded-full",
-                        selectedIndex === index ? "w-8 h-2 bg-[hsl(233_85%_60%)]" : "w-2 h-2 bg-[hsl(233_85%_60%)]/40"
+                        selectedIndex === index ? "w-8 h-2 bg-[var(--color-primary)]" : "w-2 h-2 bg-[var(--color-primary)]/40"
                       )}
                     />
                   ))}
@@ -841,31 +838,31 @@ function BillCard({ bill }: { bill: Bill }) {
     <article
       className={cn(
         "group rounded-2xl p-6 h-full flex flex-col",
-        "bg-white/80 dark:bg-white/[0.06] border border-black/5 dark:border-white/10",
-        "hover:border-[hsl(233_85%_60%)]/40 hover:shadow-[0_24px_60px_-28px_rgba(66,99,235,0.35)]",
+        "bg-[var(--color-card)] border border-[var(--color-border)]",
+        "hover:border-[var(--color-primary)]/40 hover:shadow-xl",
         "transition-all"
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+        <div className="text-xs text-[var(--color-muted)]">
           {bill.congress}th Congress • {bill.billType.toUpperCase()} {bill.billNumber}
         </div>
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
           <Link
             href={`/bills/${bill._id}`}
-            className="text-[hsl(233_85%_55%)] hover:text-[hsl(233_85%_60%)] dark:text-[hsl(233_85%_65%)] dark:hover:text-[hsl(233_85%_72%)] text-xs font-semibold"
+            className="text-[var(--color-primary-55)] hover:text-[var(--color-primary)] text-xs font-semibold"
           >
             Details →
           </Link>
         </div>
       </div>
 
-      <h3 className="text-lg md:text-xl font-heading font-semibold text-[hsl(230_16%_14%)] dark:text-white mb-2 line-clamp-2">
+      <h3 className="text-lg md:text-xl font-heading font-semibold text-[var(--color-foreground-dark)] mb-2 line-clamp-2">
         {truncate(bill.title)}
       </h3>
 
       {bill.tagline && (
-        <p className="text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mb-4 text-sm italic line-clamp-2">
+        <p className="text-[var(--color-muted-dark)] mb-4 text-sm italic line-clamp-2">
           {bill.tagline}
         </p>
       )}
@@ -873,14 +870,14 @@ function BillCard({ bill }: { bill: Bill }) {
       <div className="flex items-center gap-3 mb-4">
         <StatusBadge status={bill.status} />
         {bill.latestActionDate && (
-          <time dateTime={bill.latestActionDate} className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">
+          <time dateTime={bill.latestActionDate} className="text-xs text-[var(--color-muted)]">
             {formatDate(bill.latestActionDate)}
           </time>
         )}
       </div>
 
       {bill.sponsor && (
-        <div className="text-sm text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mb-4">
+        <div className="text-sm text-[var(--color-muted-dark)] mb-4">
           <span className="font-medium">Sponsor:</span> {bill.sponsor.name}{" "}
           <span className="text-xs">({bill.sponsor.party}-{bill.sponsor.state})</span>
         </div>
@@ -892,12 +889,12 @@ function BillCard({ bill }: { bill: Bill }) {
             <ImpactChip key={i} label={area} />
           ))}
           {bill.impactAreas.length > 3 && (
-            <span className="text-xs text-[hsl(230_12%_45%)] dark:text-[hsl(220_12%_78%)]/80">+{bill.impactAreas.length - 3} more</span>
+            <span className="text-xs text-[var(--color-muted)]">+{bill.impactAreas.length - 3} more</span>
           )}
         </div>
       )}
 
-      <div className="flex items-center justify-between mt-auto pt-4 border-t border-black/5 dark:border-white/10">
+      <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--color-border)]">
         <div className="flex items-center space-x-2">
           <IconButton title="Follow">
             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -922,7 +919,7 @@ function BillCard({ bill }: { bill: Bill }) {
         </div>
         <Link
           href={`/bills/${bill._id}`}
-          className="text-[hsl(233_85%_55%)] hover:text-[hsl(233_85%_60%)] dark:text-[hsl(233_85%_65%)] dark:hover:text-[hsl(233_85%_75%)] transition-colors text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(233_85%_60%)]/60 rounded px-1"
+          className="text-[var(--color-primary-55)] hover:text-[var(--color-primary-65)] transition-colors text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 rounded px-1"
         >
           Read More →
         </Link>
@@ -935,43 +932,43 @@ function BillCard({ bill }: { bill: Bill }) {
 
 function Footer() {
   return (
-    <footer id="about" className="relative mt-16 bg-gradient-to-b from-transparent to-white/70 dark:to-white/[0.04]">
-      <div aria-hidden className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(233_85%_60%)]/50 to-transparent" />
+    <footer id="about" className="relative mt-16 bg-gradient-to-b from-transparent to-[color:var(--color-card)]">
+      <div aria-hidden className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/50 to-transparent" />
       <div className="px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]" />
-              <h3 className="text-lg font-heading font-bold bg-clip-text text-transparent bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]">
+              <div className="w-8 h-8 rounded-lg bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))]" />
+              <h3 className="text-lg font-heading font-bold bg-clip-text text-transparent bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))]">
                 Civicly
               </h3>
             </div>
-            <p className="text-[hsl(230_12%_35%)]/85 dark:text-[hsl(220_12%_78%)]/85 mb-4 max-w-lg">
+            <p className="text-[var(--color-muted-dark)] mb-4 max-w-lg">
               Making complex legislative information accessible, credible, and empowering for every citizen.
             </p>
-            <p className="text-sm text-[hsl(230_12%_45%)]/85 dark:text-[hsl(220_12%_72%)]/80">© 2024 Civicly. All rights reserved.</p>
+            <p className="text-sm text-[var(--color-muted)]">© 2024 Civicly. All rights reserved.</p>
           </div>
 
           <div>
-            <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Platform</h4>
-            <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
+            <h4 className="font-medium text-[var(--color-foreground-dark)] mb-3">Platform</h4>
+            <ul className="space-y-2 text-sm text-[var(--color-muted)]">
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   Bills
                 </Link>
               </li>
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   Politicians
                 </Link>
               </li>
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   Search
                 </Link>
               </li>
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   API
                 </Link>
               </li>
@@ -979,25 +976,25 @@ function Footer() {
           </div>
 
           <div>
-            <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Company</h4>
-            <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
+            <h4 className="font-medium text-[var(--color-foreground-dark)] mb-3">Company</h4>
+            <ul className="space-y-2 text-sm text-[var(--color-muted)]">
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   Privacy
                 </Link>
               </li>
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   Terms
                 </Link>
               </li>
               <li>
-                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[var(--color-primary)] transition-colors">
                   Contact
                 </Link>
               </li>
