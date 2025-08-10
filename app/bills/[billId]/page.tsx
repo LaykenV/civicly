@@ -6,6 +6,15 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useConvex } from "convex/react";
 import Link from "next/link";
+import Header from "@/components/Header";
+
+function Tooltip({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="absolute left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap text-xs px-2 py-1 rounded bg-[var(--color-card)] border border-[var(--color-border)] shadow-sm">
+      {children}
+    </div>
+  );
+}
 
 // Props from Next.js dynamic routing
 type PageProps = {
@@ -357,134 +366,200 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
 
   if (!billId) {
     return (
-      <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)]">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link
-            href="/"
-            className="text-sm text-[var(--color-primary)] hover:opacity-80 transition"
-          >
-            ← Back to Home
-          </Link>
+      <>
+        <Header />
+        <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)] pt-16">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+            <Link
+              href="/"
+              className="text-sm text-[var(--color-primary)] hover:opacity-80 transition"
+            >
+              ← Back to Home
+            </Link>
+          </div>
+          <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+            <div className="text-lg">Loading bill information...</div>
+          </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-          <div className="text-lg">Loading bill information...</div>
-        </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)]">
-      {/* Top Nav / Back */}
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-[var(--color-primary)] hover:opacity-90 transition"
-        >
-          <span className="text-base">←</span>
-          <span>Back</span>
-        </Link>
-        {bill?.latestActionDate && (
-          <div className="hidden md:flex items-center gap-2 text-xs text-[var(--color-muted-foreground)]">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
-            Updated {new Date(bill.latestActionDate).toLocaleDateString()}
-          </div>
-        )}
-      </div>
-
-      {/* Header */}
-      <header className="max-w-7xl mx-auto px-4">
-        <div className="card p-5 md:p-6 shadow-[var(--shadow-lg)] rounded-xl border border-[var(--color-border)]/60">
-          <div className="flex flex-col md:flex-row md:items-start gap-5 md:gap-6">
-            {/* Avatar / Sponsor */}
-            <div className="flex items-center gap-3 md:w-1/4">
-              <div
-                className="w-12 h-12 rounded-full bg-[var(--color-card-muted)] flex items-center justify-center text-sm select-none"
-                aria-hidden
-              >
-                {sponsor?.name ? sponsor.name.split(" ").map(n => n[0]).slice(0,2).join("") : "👤"}
-              </div>
-              <div className="text-sm">
-                <div className="font-medium leading-tight">
-                  {sponsor?.name ?? <span className="opacity-60">—</span>}
-                </div>
-                <div className="text-[var(--color-muted-foreground)]">
-                  {sponsor ? `${sponsor.party} • ${sponsor.state}` : "—"}
-                </div>
-              </div>
+    <>
+      <Header />
+      <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)] pt-16">
+        {/* Top Nav / Back */}
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-[var(--color-primary)] hover:opacity-90 transition"
+          >
+            <span className="text-base">←</span>
+            <span>Back</span>
+          </Link>
+          {bill?.latestActionDate && (
+            <div className="hidden md:flex items-center gap-2 text-xs text-[var(--color-muted-foreground)]">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
+              Updated {new Date(bill.latestActionDate).toLocaleDateString()}
             </div>
+          )}
+        </div>
 
-            {/* Bill core info */}
-            <div className="flex-1">
-              <div className="text-xs md:text-sm font-medium text-[var(--color-muted-foreground)]">
-                {bill
-                  ? `${bill.congress}th Congress — ${bill.billType} ${bill.billNumber}`
-                  : "Loading..."}
-              </div>
-              <h1
-                className="mt-1 text-2xl md:text-3xl leading-snug tracking-tight"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {bill?.title ?? (
-                  <span className="inline-block h-6 w-2/3 bg-[var(--color-card-muted)] rounded animate-pulse" />
-                )}
-              </h1>
-              {bill?.tagline ? (
-                <div className="mt-1 text-[var(--color-muted-foreground)]">
-                  {bill.tagline}
+        {/* Header */}
+        <header className="max-w-7xl mx-auto px-4">
+          <div className="card p-5 md:p-6 shadow-[var(--shadow-lg)] rounded-xl border border-[var(--color-border)]/60">
+            <div className="flex flex-col md:flex-row md:items-start gap-5 md:gap-6">
+              {/* Avatar / Sponsor */}
+              <div className="flex items-center gap-3 md:w-1/4">
+                <div
+                  className="w-12 h-12 rounded-full bg-[var(--color-card-muted)] flex items-center justify-center text-sm select-none"
+                  aria-hidden
+                >
+                  {sponsor?.name ? sponsor.name.split(" ").map(n => n[0]).slice(0,2).join("") : "👤"}
                 </div>
-              ) : null}
-
-              {/* Status and lifecycle */}
-              <div className="mt-3 flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={classNames(
-                      "inline-flex items-center px-2 py-1 rounded-full text-xs shadow-sm border border-[var(--color-border)]/70",
-                      statusClass
-                    )}
-                    title="Current status"
-                  >
-                    {bill?.status ?? "—"}
-                  </span>
-                  <span className="text-xs text-[var(--color-muted-foreground)]">
-                    Legislative progress
-                  </span>
-                </div>
-                <div className="relative h-2 rounded-full bg-[var(--color-border)]/70 overflow-hidden">
-                  <div
-                    className="absolute left-0 top-0 h-full bg-[var(--color-primary)] transition-[width] duration-500"
-                    style={{ width: `${Math.round(lifecycleProgress * 100)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-[var(--color-muted-foreground)] uppercase tracking-wide">
-                  {lifecycleOrder.map((step) => (
-                    <span key={step} className="w-1/5 text-center">
-                      {step.replace("_", " ")}
-                    </span>
-                  ))}
+                <div className="text-sm">
+                  <div className="font-medium leading-tight">
+                    {sponsor?.name ?? <span className="opacity-60">—</span>}
+                  </div>
+                  <div className="text-[var(--color-muted-foreground)]">
+                    {sponsor ? `${sponsor.party} • ${sponsor.state}` : "—"}
+                  </div>
                 </div>
               </div>
 
-              {/* Impact Areas */}
-              {impactAreas.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {impactAreas.map((area: string, idx: number) => (
+              {/* Bill core info */}
+              <div className="flex-1">
+                <div className="text-xs md:text-sm font-medium text-[var(--color-muted-foreground)]">
+                  {bill
+                    ? `${bill.congress}th Congress — ${bill.billType} ${bill.billNumber}`
+                    : "Loading..."}
+                </div>
+                <h1
+                  className="mt-1 text-2xl md:text-3xl leading-snug tracking-tight"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  {bill?.title ?? (
+                    <span className="inline-block h-6 w-2/3 bg-[var(--color-card-muted)] rounded animate-pulse" />
+                  )}
+                </h1>
+                {bill?.tagline ? (
+                  <div className="mt-1 text-[var(--color-muted-foreground)]">
+                    {bill.tagline}
+                  </div>
+                ) : null}
+
+                {/* Status and lifecycle */}
+                <div className="mt-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
                     <span
-                      key={idx}
-                      className="px-2 py-1 rounded-full text-xs bg-[var(--color-card-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/60 transition-colors"
+                      className={classNames(
+                        "inline-flex items-center px-2 py-1 rounded-full text-xs shadow-sm border border-[var(--color-border)]/70",
+                        statusClass
+                      )}
+                      title="Current status"
                     >
-                      {area}
+                      {bill?.status ?? "—"}
                     </span>
-                  ))}
+                    <span className="text-xs text-[var(--color-muted-foreground)]">
+                      Legislative progress
+                    </span>
+                  </div>
+                  <div className="relative h-2 rounded-full bg-[var(--color-border)]/70 overflow-hidden">
+                    <div
+                      className="absolute left-0 top-0 h-full bg-[var(--color-primary)] transition-[width] duration-500"
+                      style={{ width: `${Math.round(lifecycleProgress * 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--color-muted-foreground)] uppercase tracking-wide">
+                    {lifecycleOrder.map((step) => (
+                      <span key={step} className="w-1/5 text-center">
+                        {step.replace("_", " ")}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              )}
+
+                {/* Impact Areas */}
+                {impactAreas.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {impactAreas.map((area: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 rounded-full text-xs bg-[var(--color-card-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/60 transition-colors"
+                      >
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-start gap-2 md:flex-col md:items-end">
+                <div
+                  onMouseEnter={() => setHoveredTooltip("follow")}
+                  onMouseLeave={() => setHoveredTooltip(null)}
+                  className="relative"
+                >
+                  <button
+                    className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition disabled:opacity-60"
+                    disabled
+                  >
+                    ★ Follow
+                  </button>
+                  {hoveredTooltip === "follow" && (
+                    <Tooltip>Coming Soon!</Tooltip>
+                  )}
+                </div>
+                <button
+                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(window.location.href);
+                    } catch {}
+                  }}
+                  title="Copy link"
+                >
+                  ⤴ Share
+                </button>
+                <div
+                  onMouseEnter={() => setHoveredTooltip("vote")}
+                  onMouseLeave={() => setHoveredTooltip(null)}
+                  className="relative"
+                >
+                  <button
+                    className="btn-primary disabled:opacity-60"
+                    disabled={true || disabledPro}
+                  >
+                    Cast My Vote
+                  </button>
+                  {hoveredTooltip === "vote" && (
+                    <Tooltip>Coming Soon!</Tooltip>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-start gap-2 md:flex-col md:items-end">
+            {/* Secondary actions */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <div
-                onMouseEnter={() => setHoveredTooltip("follow")}
+                onMouseEnter={() => setHoveredTooltip("impact")}
+                onMouseLeave={() => setHoveredTooltip(null)}
+                className="relative"
+              >
+                <button
+                  className="px-3 py-2 rounded-md text-sm text-white hover:opacity-95 transition"
+                  style={{ background: "var(--color-accent)" }}
+                  disabled
+                >
+                  Analyze Impact on Me
+                </button>
+                {hoveredTooltip === "impact" && <Tooltip>Coming Soon!</Tooltip>}
+              </div>
+
+              <div
+                onMouseEnter={() => setHoveredTooltip("compare")}
                 onMouseLeave={() => setHoveredTooltip(null)}
                 className="relative"
               >
@@ -492,143 +567,108 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                   className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition disabled:opacity-60"
                   disabled
                 >
-                  ★ Follow
+                  Compare Versions
                 </button>
-                {hoveredTooltip === "follow" && (
-                  <Tooltip>Coming Soon!</Tooltip>
-                )}
+                {hoveredTooltip === "compare" && <Tooltip>Coming Soon!</Tooltip>}
               </div>
-              <button
-                className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(window.location.href);
-                  } catch {}
-                }}
-                title="Copy link"
-              >
-                ⤴ Share
-              </button>
+
               <div
-                onMouseEnter={() => setHoveredTooltip("vote")}
+                onMouseEnter={() => setHoveredTooltip("cosponsors")}
                 onMouseLeave={() => setHoveredTooltip(null)}
                 className="relative"
               >
                 <button
-                  className="btn-primary disabled:opacity-60"
-                  disabled={true || disabledPro}
+                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm disabled:opacity-60"
+                  disabled
                 >
-                  Cast My Vote
+                  Cosponsors (0)
                 </button>
-                {hoveredTooltip === "vote" && (
-                  <Tooltip align="right">Coming Soon!</Tooltip>
-                )}
+                {hoveredTooltip === "cosponsors" && <Tooltip>Coming Soon!</Tooltip>}
+              </div>
+
+              <div
+                onMouseEnter={() => setHoveredTooltip("committees")}
+                onMouseLeave={() => setHoveredTooltip(null)}
+                className="relative"
+              >
+                <button
+                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm disabled:opacity-60"
+                  disabled
+                >
+                  Committees: {bill?.committees?.join(", ") ?? "—"}
+                </button>
+                {hoveredTooltip === "committees" && <Tooltip>Coming Soon!</Tooltip>}
               </div>
             </div>
           </div>
+        </header>
 
-          {/* Secondary actions */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div
-              onMouseEnter={() => setHoveredTooltip("impact")}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              className="relative"
-            >
+        {/* Mobile Tabs (sticky) */}
+        <div className="md:hidden max-w-7xl mx-auto px-4 mt-4 sticky top-0 z-20">
+          <div className="flex rounded-lg bg-[var(--color-card)] border border-[var(--color-border)] overflow-hidden">
+            {[
+              { key: "summary" as const, label: "Summary" },
+              { key: "chat" as const, label: "Chat" },
+              { key: "text" as const, label: "Bill Text" },
+            ].map((tab) => (
               <button
-                className="px-3 py-2 rounded-md text-sm text-white hover:opacity-95 transition"
-                style={{ background: "var(--color-accent)" }}
-                disabled
+                key={tab.key}
+                className={classNames(
+                  "flex-1 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition",
+                  activeMobileTab === tab.key
+                    ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-card-muted)]"
+                )}
+                onClick={() => setActiveMobileTab(tab.key)}
               >
-                Analyze Impact on Me
+                {tab.label}
               </button>
-              {hoveredTooltip === "impact" && <Tooltip>Coming Soon!</Tooltip>}
-            </div>
-
-            <div
-              onMouseEnter={() => setHoveredTooltip("compare")}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              className="relative"
-            >
-              <button
-                className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition disabled:opacity-60"
-                disabled
-              >
-                Compare Versions
-              </button>
-              {hoveredTooltip === "compare" && <Tooltip>Coming Soon!</Tooltip>}
-            </div>
-
-            <div
-              onMouseEnter={() => setHoveredTooltip("cosponsors")}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              className="relative"
-            >
-              <button
-                className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm disabled:opacity-60"
-                disabled
-              >
-                Cosponsors (0)
-              </button>
-              {hoveredTooltip === "cosponsors" && <Tooltip>Coming Soon!</Tooltip>}
-            </div>
-
-            <div
-              onMouseEnter={() => setHoveredTooltip("committees")}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              className="relative"
-            >
-              <button
-                className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm disabled:opacity-60"
-                disabled
-              >
-                Committees: {bill?.committees?.join(", ") ?? "—"}
-              </button>
-              {hoveredTooltip === "committees" && <Tooltip>Coming Soon!</Tooltip>}
-            </div>
+            ))}
           </div>
         </div>
-      </header>
 
-      {/* Mobile Tabs (sticky) */}
-      <div className="md:hidden max-w-7xl mx-auto px-4 mt-4 sticky top-0 z-20">
-        <div className="flex rounded-lg bg-[var(--color-card)] border border-[var(--color-border)] overflow-hidden">
-          {[
-            { key: "summary" as const, label: "Summary" },
-            { key: "chat" as const, label: "Chat" },
-            { key: "text" as const, label: "Bill Text" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              className={classNames(
-                "flex-1 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition",
-                activeMobileTab === tab.key
-                  ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-                  : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-card-muted)]"
-              )}
-              onClick={() => setActiveMobileTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 mt-4 md:grid md:grid-cols-2 md:gap-4">
+          {/* Left Pane */}
+          <section className="md:col-span-1 space-y-4">
+            {/* Desktop Tabs */}
+            <div className="hidden md:block">
+              <div className="card p-0 overflow-hidden shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
+                <DesktopTabs>
+                  <DesktopTab label="AI Summary" defaultActive>
+                    <AISummary
+                      bill={bill}
+                      parsedChangeAnalysis={parsedChangeAnalysis}
+                      onCitationClick={handleCitationClick}
+                    />
+                  </DesktopTab>
+                  <DesktopTab label="Chat">
+                    <ChatBox
+                      messages={chatMessages}
+                      input={chatInput}
+                      onChangeInput={setChatInput}
+                      onSend={handleSendChat}
+                      isLoading={isChatLoading}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  </DesktopTab>
+                </DesktopTabs>
+              </div>
+            </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 mt-4 md:grid md:grid-cols-2 md:gap-4">
-        {/* Left Pane */}
-        <section className="md:col-span-1 space-y-4">
-          {/* Desktop Tabs */}
-          <div className="hidden md:block">
-            <div className="card p-0 overflow-hidden shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
-              <DesktopTabs>
-                <DesktopTab label="AI Summary" defaultActive>
+            {/* Mobile conditional content */}
+            <div className="md:hidden">
+              {activeMobileTab === "summary" && (
+                <div className="card p-4 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
                   <AISummary
                     bill={bill}
                     parsedChangeAnalysis={parsedChangeAnalysis}
                     onCitationClick={handleCitationClick}
                   />
-                </DesktopTab>
-                <DesktopTab label="Chat">
+                </div>
+              )}
+              {activeMobileTab === "chat" && (
+                <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
                   <ChatBox
                     messages={chatMessages}
                     input={chatInput}
@@ -637,175 +677,130 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                     isLoading={isChatLoading}
                     isAuthenticated={isAuthenticated}
                   />
-                </DesktopTab>
-              </DesktopTabs>
+                </div>
+              )}
             </div>
-          </div>
+          </section>
 
-          {/* Mobile conditional content */}
-          <div className="md:hidden">
-            {activeMobileTab === "summary" && (
-              <div className="card p-4 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
-                <AISummary
-                  bill={bill}
-                  parsedChangeAnalysis={parsedChangeAnalysis}
-                  onCitationClick={handleCitationClick}
-                />
-              </div>
-            )}
-            {activeMobileTab === "chat" && (
-              <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
-                <ChatBox
-                  messages={chatMessages}
-                  input={chatInput}
-                  onChangeInput={setChatInput}
-                  onSend={handleSendChat}
-                  isLoading={isChatLoading}
-                  isAuthenticated={isAuthenticated}
-                />
-              </div>
-            )}
-          </div>
-        </section>
+          {/* Right Pane: Bill Text */}
+          <section className="md:col-span-1 mt-4 md:mt-0">
+            <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
+              {/* Header controls (sticky) */}
+              <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-[var(--color-muted-foreground)]">
+                    Version
+                  </label>
+                  <select
+                    className="px-2 py-1 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition"
+                    value={selectedVersionId ?? ""}
+                    onChange={handleVersionChange}
+                  >
+                    {versions?.map((v: BillVersionData) => (
+                      <option key={v._id} value={v._id}>
+                        {v.versionCode} — {new Date(v.publishedDate).toLocaleDateString()}
+                      </option>
+                    )) ?? <option>Loading...</option>}
+                  </select>
+                  {versionText?.fullText && (
+                    <span className="ml-auto text-xs text-[var(--color-muted-foreground)]">
+                      {lines.length.toLocaleString()} lines
+                    </span>
+                  )}
+                </div>
 
-        {/* Right Pane: Bill Text */}
-        <section className="md:col-span-1 mt-4 md:mt-0">
-          <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
-            {/* Header controls (sticky) */}
-            <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-[var(--color-muted-foreground)]">
-                  Version
-                </label>
-                <select
-                  className="px-2 py-1 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition"
-                  value={selectedVersionId ?? ""}
-                  onChange={handleVersionChange}
-                >
-                  {versions?.map((v: BillVersionData) => (
-                    <option key={v._id} value={v._id}>
-                      {v.versionCode} — {new Date(v.publishedDate).toLocaleDateString()}
-                    </option>
-                  )) ?? <option>Loading...</option>}
-                </select>
-                {versionText?.fullText && (
-                  <span className="ml-auto text-xs text-[var(--color-muted-foreground)]">
-                    {lines.length.toLocaleString()} lines
-                  </span>
+                <form className="flex gap-2 items-center" onSubmit={handleSearch}>
+                  <input
+                    className="search-input flex-1"
+                    placeholder="Search bill text..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <button
+                    className="btn-primary disabled:opacity-60"
+                    type="submit"
+                    disabled={isSearching}
+                  >
+                    {isSearching ? "Searching..." : "Search"}
+                  </button>
+                </form>
+
+                {/* Search results list */}
+                {searchResults.length > 0 && (
+                  <div className="max-h-44 overflow-auto border border-[var(--color-border)] rounded-md bg-[var(--color-card)]">
+                    {searchResults.map((r: SearchResult, idx: number) => (
+                      <button
+                        key={idx}
+                        className="w-full text-left p-2 hover:bg-[var(--color-card-muted)] border-b last:border-b-0 border-[var(--color-border)] transition group"
+                        onClick={() => handleClickSearchResult(r.position)}
+                        title="Jump to position in text"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-[var(--color-muted-foreground)]">
+                            Match at position {r.position}
+                          </div>
+                          <span className="opacity-0 group-hover:opacity-100 text-[var(--color-primary)] text-xs transition">
+                            Jump →
+                          </span>
+                        </div>
+                        <div className="text-sm line-clamp-2 mt-0.5">{r.excerpt}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {searchResults.length === 0 && searchTerm && !isSearching && (
+                  <div className="text-xs text-[var(--color-muted-foreground)]">
+                    No matches for “{searchTerm}”.
+                  </div>
                 )}
               </div>
 
-              <form className="flex gap-2 items-center" onSubmit={handleSearch}>
-                <input
-                  className="search-input flex-1"
-                  placeholder="Search bill text..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button
-                  className="btn-primary disabled:opacity-60"
-                  type="submit"
-                  disabled={isSearching}
-                >
-                  {isSearching ? "Searching..." : "Search"}
-                </button>
-              </form>
-
-              {/* Search results list */}
-              {searchResults.length > 0 && (
-                <div className="max-h-44 overflow-auto border border-[var(--color-border)] rounded-md bg-[var(--color-card)]">
-                  {searchResults.map((r: SearchResult, idx: number) => (
-                    <button
-                      key={idx}
-                      className="w-full text-left p-2 hover:bg-[var(--color-card-muted)] border-b last:border-b-0 border-[var(--color-border)] transition group"
-                      onClick={() => handleClickSearchResult(r.position)}
-                      title="Jump to position in text"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-[var(--color-muted-foreground)]">
-                          Match at position {r.position}
+              {/* Bill Text */}
+              <div
+                className="h-[58vh] md:h-[72vh] overflow-auto bg-[var(--color-card-muted)]"
+                ref={textContainerRef}
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {lines.length === 0 ? (
+                  <div className="p-6 text-sm text-[var(--color-muted-foreground)]">
+                    {versionIdToLoad ? "Loading bill text..." : "Select a version"}
+                  </div>
+                ) : (
+                  <div className="p-4">
+                    {lines.map((ln: string, i: number) => {
+                      const highlighted = highlightRanges.includes(i);
+                      return (
+                        <div
+                          key={i}
+                          data-line-index={i}
+                          className={classNames(
+                            "whitespace-pre-wrap break-words py-0.5 rounded-sm px-1",
+                            highlighted &&
+                              "bg-[var(--color-primary)]/15 outline outline-1 outline-[var(--color-primary)]/40 transition-colors"
+                          )}
+                        >
+                          {ln || " "}
                         </div>
-                        <span className="opacity-0 group-hover:opacity-100 text-[var(--color-primary)] text-xs transition">
-                          Jump →
-                        </span>
-                      </div>
-                      <div className="text-sm line-clamp-2 mt-0.5">{r.excerpt}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {searchResults.length === 0 && searchTerm && !isSearching && (
-                <div className="text-xs text-[var(--color-muted-foreground)]">
-                  No matches for “{searchTerm}”.
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
+          </section>
 
-            {/* Bill Text */}
-            <div
-              className="h-[58vh] md:h-[72vh] overflow-auto bg-[var(--color-card-muted)]"
-              ref={textContainerRef}
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              {lines.length === 0 ? (
-                <div className="p-6 text-sm text-[var(--color-muted-foreground)]">
-                  {versionIdToLoad ? "Loading bill text..." : "Select a version"}
-                </div>
-              ) : (
-                <div className="p-4">
-                  {lines.map((ln: string, i: number) => {
-                    const highlighted = highlightRanges.includes(i);
-                    return (
-                      <div
-                        key={i}
-                        data-line-index={i}
-                        className={classNames(
-                          "whitespace-pre-wrap break-words py-0.5 rounded-sm px-1",
-                          highlighted &&
-                            "bg-[var(--color-primary)]/15 outline outline-1 outline-[var(--color-primary)]/40 transition-colors"
-                        )}
-                      >
-                        {ln || " "}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+          {activeMobileTab === "text" && (
+            <div className="md:hidden col-span-2 mt-4" />
+          )}
+        </main>
 
-        {activeMobileTab === "text" && (
-          <div className="md:hidden col-span-2 mt-4" />
-        )}
-      </main>
-
-      <footer className="h-8" />
-    </div>
+        <footer className="h-8" />
+      </div>
+    </>
   );
 };
 
 /* ---------- Subcomponents ---------- */
-
-function Tooltip({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) {
-  return (
-    <div
-      className={classNames(
-        "absolute top-full mt-1 z-20 text-xs px-2 py-1 rounded-md bg-[var(--color-popover)] border border-[var(--color-border)] shadow-[var(--shadow-md)]",
-        align === "right" ? "right-0" : ""
-      )}
-      role="tooltip"
-    >
-      {children}
-    </div>
-  );
-}
 
 interface DesktopTabProps {
   label: string;
