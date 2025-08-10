@@ -449,12 +449,16 @@ function HeroSearch() {
 
   const placeholders = useMemo(
     () => [
-      "Search healthcare reform bills…",
-      "Find climate policy legislation…",
-      "Explore immigration reform…",
-      "Discover tax policy changes…",
-      "Bills about small businesses…",
-      "Education funding in the House…",
+      "Healthcare Reform",
+      "Climate Policy",
+      "Immigration Reform",
+      "Tax Policy",
+      "Small Business",
+      "Education Funding",
+      "Federal Budget",
+      "Criminal Justice",
+      "Technology Policy",
+      "Defense Spending",
     ],
     []
   );
@@ -952,24 +956,24 @@ function Footer() {
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
               <li>
-                <Link href="/bills" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Bills
                 </Link>
               </li>
               <li>
-                <Link href="/politicians" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Politicians
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Search
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/api" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   API
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -978,24 +982,24 @@ function Footer() {
             <h4 className="font-medium text-[hsl(230_16%_20%)] dark:text-white mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-[hsl(230_12%_40%)]/90 dark:text-[hsl(220_12%_78%)]/90">
               <li>
-                <a href="/about" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   About
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Privacy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Terms
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-[hsl(233_85%_60%)] transition-colors">
+                <Link href="/coming-soon" className="hover:text-[hsl(233_85%_60%)] transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
