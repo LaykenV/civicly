@@ -4,9 +4,11 @@ cron should call internal base func
 
 
 homepage:
-typewriter
-sticky header
-log warnings
+//typewriter
+//sticky header
+//log warnings
+font
+typewriter text
 
 
 Marketing:
@@ -23,8 +25,9 @@ Pipeline:
 bills page:
 ui tweaks - top is foldable, coming soon, header?, dock, floating animation on hover, chat and summary together
 debounce search and highlight
+header across app
 
-sign in page ui
+//sign in page ui
 
 backload data - last 1000 bills?
 MVP LAUNCH

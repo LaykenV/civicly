@@ -473,3 +473,9 @@ body {
     border-radius: var(--border-radius);
   }
 }
+
+/* Typewriter placeholder aesthetics */
+.input-placeholder-typewriter::placeholder {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}

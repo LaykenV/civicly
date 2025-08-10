@@ -418,7 +418,7 @@ function Header() {
           <button
             onClick={() => {
               setShowUserMenu(false);
-              void signOut().then(() => router.push("/signin"));
+              void signOut().then(() => router.push("/auth"));
             }}
             className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[hsl(230_12%_40%)] dark:text-[hsl(220_12%_72%)] hover:text-[hsl(230_16%_20%)] dark:hover:text-white hover:bg-[hsl(230_10%_94%)]/70 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
@@ -435,11 +435,11 @@ function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-transparent transition-all",
+        "fixed left-0 right-0 top-0 z-50 border-b border-transparent transition-all",
         "supports-[backdrop-filter]:backdrop-blur-xl",
         scrolled
           ? "bg-white/80 dark:bg-[hsl(220_28%_10%)]/80 border-[hsl(230_16%_90%)]/70 dark:border-white/10 shadow-sm"
-          : "bg-white/40 dark:bg-[hsl(220_28%_10%)]/40"
+          : "bg-transparent"
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -489,13 +489,13 @@ function Header() {
             ) : (
               <>
                 <button
-                  onClick={() => router.push("/signin")}
+                  onClick={() => router.push("/auth?flow=signIn")}
                   className="btn-secondary"
                 >
                   Sign In
                 </button>
                 <button
-                  onClick={() => router.push("/signin")}
+                  onClick={() => router.push("/auth?flow=signUp")}
                   className="btn-primary"
                 >
                   Get Started
@@ -514,7 +514,7 @@ function Header() {
 function HeroSection() {
   // Added a subtle texture layer + larger top/bottom space for prime focus.
   return (
-    <section className="relative min-h-[60vh] sm:min-h-[70vh] flex items-center px-4 sm:px-6 lg:px-8 py-20 md:py-24">
+    <section className="relative min-h-[60vh] sm:min-h-[70vh] flex items-center px-4 sm:px-6 lg:px-8 py-20 md:py-24 mt-16">
       <div aria-hidden className="pointer-events-none absolute -top-40 -left-24 h-[28rem] w-[28rem] rounded-full blur-3xl bg-[hsl(233_85%_60%)]/25" />
       <div aria-hidden className="pointer-events-none absolute -top-16 right-0 h-[22rem] w-[22rem] rounded-full blur-3xl bg-[hsl(43_74%_52%)]/18" />
       <div aria-hidden className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_5%,black,transparent)]">
@@ -528,7 +528,7 @@ function HeroSection() {
         </span>
 
         <h1 className="mt-8 md:mt-10 text-4xl md:text-6xl lg:text-7xl font-heading font-bold leading-[1.05] tracking-tight">
-          <span className="bg-clip-text text-transparent bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]">
+          <span className="inline-block pr-[0.04em] bg-clip-text text-transparent bg-[linear-gradient(135deg,hsl(233_85%_60%),hsl(43_74%_52%))]">
             Understand Congress,
           </span>{" "}
           instantly.
@@ -612,6 +612,7 @@ function SearchResultCard({ result, onClick }: { result: BillSearchResult; onCli
 function HeroSearch() {
   const [value, setValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [typedPlaceholder, setTypedPlaceholder] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -632,12 +633,55 @@ function HeroSearch() {
 
   const [searchResults, setSearchResults] = useState<BillSearchResponse | null>(null);
 
+  // Typewriter effect for placeholder
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (value.trim().length > 0) {
+      // Pause typewriter while user is typing
+      return;
+    }
+
+    let isCancelled = false;
+    let timeoutId: number | undefined;
+
+    const typeSpeed = 38; // ms per character
+    const deleteSpeed = 26; // ms per character
+    const holdAfterType = 1200; // ms to hold full text
+    const holdAfterDelete = 500; // ms before next phrase
+
+    const phrase = placeholders[placeholderIndex] ?? "";
+
+    const run = async () => {
+      // Type characters
+      for (let i = 1; i <= phrase.length; i++) {
+        if (isCancelled) return;
+        setTypedPlaceholder(phrase.slice(0, i));
+        await new Promise((r) => (timeoutId = window.setTimeout(r, typeSpeed)));
+      }
+
+      // Hold full phrase
+      await new Promise((r) => (timeoutId = window.setTimeout(r, holdAfterType)));
+      if (isCancelled) return;
+
+      // Delete characters
+      for (let i = phrase.length - 1; i >= 0; i--) {
+        if (isCancelled) return;
+        setTypedPlaceholder(phrase.slice(0, i));
+        await new Promise((r) => (timeoutId = window.setTimeout(r, deleteSpeed)));
+      }
+
+      // Hold after delete and move to next phrase
+      await new Promise((r) => (timeoutId = window.setTimeout(r, holdAfterDelete)));
+      if (isCancelled) return;
       setPlaceholderIndex((p) => (p + 1) % placeholders.length);
-    }, 3200);
-    return () => clearInterval(interval);
-  }, [placeholders.length]);
+    };
+
+    run();
+
+    return () => {
+      isCancelled = true;
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [placeholderIndex, placeholders, value]);
 
   useEffect(() => {
     const onK = (e: KeyboardEvent) => {
@@ -682,6 +726,7 @@ function HeroSearch() {
     if (!e.target.value.trim()) {
       setShowDropdown(false);
       setSearchResults(null);
+      // resume typewriter from current index
     }
   };
 
@@ -726,9 +771,10 @@ function HeroSearch() {
               "pl-12 pr-28 py-3.5 md:py-4 text-base md:text-lg",
               "placeholder:text-[hsl(230_12%_55%)]/85 dark:placeholder:text-[hsl(220_12%_78%)]/70",
               "text-[hsl(230_16%_16%)] dark:text-[hsl(220_12%_94%)]",
-              "focus:outline-none focus:border-[hsl(233_85%_60%)]/70"
+              "focus:outline-none focus:border-[hsl(233_85%_60%)]/70",
+              "input-placeholder-typewriter"
             )}
-            placeholder={placeholders[placeholderIndex]}
+            placeholder={typedPlaceholder}
             autoComplete="off"
           />
 
