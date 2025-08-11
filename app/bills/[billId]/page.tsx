@@ -180,7 +180,8 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
   ]);
   const isChatLoading = false;
 
-  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const textContainerRefDesktop = useRef<HTMLDivElement | null>(null);
+  const textContainerRefMobile = useRef<HTMLDivElement | null>(null);
   const [highlightRanges, setHighlightRanges] = useState<number[]>([]);
 
   // Left/Right card refs to sync heights on desktop
@@ -229,27 +230,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
   const lifecycleProgress = getLifecycleProgress(bill?.status);
   const statusClass = bill?.status ? statusClassMap[bill.status] ?? "" : "";
 
-  const parsedChangeAnalysis: ChangeAnalysisItem[] = useMemo(() => {
-    if (!bill?.changeAnalysis) return [];
-    if (typeof bill.changeAnalysis === "string") {
-      try {
-        const arr = JSON.parse(bill.changeAnalysis);
-        if (Array.isArray(arr)) return arr as ChangeAnalysisItem[];
-        return [];
-      } catch {
-        return [
-          {
-            title: "Proposed Changes",
-            proposedChange: bill.changeAnalysis,
-          },
-        ];
-      }
-    }
-    if (Array.isArray(bill.changeAnalysis)) {
-      return bill.changeAnalysis as ChangeAnalysisItem[];
-    }
-    return [];
-  }, [bill?.changeAnalysis]);
+  // Removed change analysis parsing for now
 
   const lines = useMemo(() => {
     const text = versionText?.fullText ?? "";
@@ -262,7 +243,9 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
   }, [versionText?.fullText]);
 
   const scrollToPosition = (charIndex: number) => {
-    const container = textContainerRef.current;
+    const container = isMobile
+      ? textContainerRefMobile.current
+      : textContainerRefDesktop.current;
     if (!container) return;
 
     const rawText = versionText?.fullText ?? "";
@@ -282,8 +265,10 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
       `[data-line-index="${targetLineIdx}"]`
     );
     if (lineEl && container) {
+      const topPadding = Math.max(32, Math.floor(container.clientHeight * 0.2));
+      const targetTop = Math.max(0, (lineEl.offsetTop ?? 0) - topPadding);
       container.scrollTo({
-        top: (lineEl.offsetTop ?? 0) - 16,
+        top: targetTop,
         behavior: "smooth",
       });
       setHighlightRanges([targetLineIdx]);
@@ -302,7 +287,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
         if (section.versionId !== versionIdToLoad) {
           setSelectedVersionId(section.versionId as unknown as string);
         }
-        setActiveMobileTab("text");
+        if (isMobile) setActiveMobileTab("text");
         setTimeout(() => {
           scrollToPosition(section.startPosition);
         }, 100);
@@ -584,7 +569,6 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                   <DesktopTab label="AI Summary" defaultActive>
                     <AISummary
                       bill={bill}
-                      parsedChangeAnalysis={parsedChangeAnalysis}
                       onCitationClick={handleCitationClick}
                     />
                   </DesktopTab>
@@ -608,7 +592,6 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                 <div className="card p-4 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
                   <AISummary
                     bill={bill}
-                    parsedChangeAnalysis={parsedChangeAnalysis}
                     onCitationClick={handleCitationClick}
                   />
                 </div>
@@ -633,6 +616,12 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
             <div ref={rightTextCardRef} className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden flex flex-col">
               {/* Header controls */}
               <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)]">
+                <h2
+                  className="text-base font-semibold tracking-tight"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  Full Bill Text
+                </h2>
                 <div className="flex items-center gap-2">
                   <label className="text-sm text-[var(--color-muted-foreground)]">
                     Version
@@ -699,7 +688,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
               {/* Bill Text */}
               <div
                 className="flex-1 overflow-auto bg-[var(--color-card-muted)]"
-                ref={textContainerRef}
+                ref={textContainerRefDesktop}
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 {lines.length === 0 ? (
@@ -734,6 +723,12 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
             <section className="md:hidden mt-4">
               <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
                 <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
+                  <h2
+                    className="text-base font-semibold tracking-tight"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    Full Bill Text
+                  </h2>
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[var(--color-muted-foreground)]">Version</label>
                     <VersionSelect
@@ -796,7 +791,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
 
                 <div
                   className="h-[58vh] overflow-auto bg-[var(--color-card-muted)]"
-                  ref={textContainerRef}
+                  ref={textContainerRefMobile}
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {lines.length === 0 ? (
@@ -935,9 +930,8 @@ const VersionSelect: React.FC<{
 
 const AISummary: React.FC<{
   bill?: BillData;
-  parsedChangeAnalysis: ChangeAnalysisItem[];
   onCitationClick: (sectionId: string) => void;
-}> = ({ bill, parsedChangeAnalysis, onCitationClick }) => {
+}> = ({ bill, onCitationClick }) => {
   const isMobile = useIsMobile();
 
   const renderSummaryWithCitations = (text: string) => {
@@ -955,8 +949,9 @@ const AISummary: React.FC<{
           key={`${match.index}-${sectionId}`}
           className="text-[var(--color-primary)] underline underline-offset-2 hover:opacity-80"
           onClick={() => onCitationClick(sectionId)}
+          title={label}
         >
-          {label}
+          View section
         </button>
       );
       lastIdx = regex.lastIndex;
@@ -1007,9 +1002,9 @@ const AISummary: React.FC<{
                           key={i}
                           className="px-2 py-1 rounded-full text-xs bg-[var(--color-card-muted)] border border-[var(--color-border)] text-[var(--color-primary)] hover:opacity-90 transition"
                           onClick={() => onCitationClick(c.sectionId)}
-                          title="Jump to section in Bill Text"
+                          title={c.label}
                         >
-                          {c.label}
+                          View section
                         </button>
                       ))}
                     </div>
@@ -1020,64 +1015,6 @@ const AISummary: React.FC<{
           </div>
         </div>
       )}
-
-      <div>
-        <h3
-          className="text-base font-semibold mb-2 tracking-tight"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
-          Current Law vs. Proposed Changes
-        </h3>
-        {parsedChangeAnalysis.length === 0 ? (
-          <div className="text-sm text-[var(--color-muted-foreground)]">
-            No change analysis available.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {parsedChangeAnalysis.map((item, idx) => (
-              <ExpandableSectionCard key={idx} title={item.title ?? `Item ${idx + 1}`} isMobile={isMobile}>
-                <div className="grid grid-cols-1 md:grid-cols-2">
-                  <div className="p-3">
-                    <div className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)] mb-1">
-                      Current Law
-                    </div>
-                    <div className="text-sm leading-relaxed">
-                      {item.currentLaw ?? "—"}
-                    </div>
-                  </div>
-                  <div className="p-3 border-t md:border-t-0 md:border-l border-[var(--color-border)]">
-                    <div className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)] mb-1">
-                      Proposed Change
-                    </div>
-                    <div className="text-sm leading-relaxed">
-                      {item.proposedChange ?? "—"}
-                    </div>
-                  </div>
-                </div>
-                {item.citations && item.citations.length > 0 && (
-                  <div className="px-3 py-2 border-t border-[var(--color-border)] bg-[var(--color-card)]">
-                    <div className="text-xs text-[var(--color-muted-foreground)] mb-1">
-                      Citations
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {item.citations.map((c, i) => (
-                        <button
-                          key={i}
-                          className="px-2 py-1 rounded-full text-xs bg-[var(--color-card-muted)] border border-[var(--color-border)] text-[var(--color-primary)] hover:opacity-90 transition"
-                          onClick={() => onCitationClick(c.sectionId)}
-                          title="Jump to section in Bill Text"
-                        >
-                          {c.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </ExpandableSectionCard>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
