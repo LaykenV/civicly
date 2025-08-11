@@ -9,6 +9,7 @@ import { BillSearchResult, BillSearchResponse } from "../types";
 import Header from "@/components/Header";
 import { cn } from "@/lib/cn";
 import { useRouter } from "next/navigation";
+import { parseBillDate, formatDate } from "@/utils/dates";
 
 interface Bill {
   _id: Id<"bills">;
@@ -925,38 +926,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function BillCard({ bill }: { bill: Bill }) {
-  const parseBillDate = (input?: string): Date | null => {
-    if (!input) return null;
-    const s = String(input).trim();
-    if (/^\d{8}$/.test(s)) {
-      const year = Number(s.slice(0, 4));
-      const month = Number(s.slice(4, 6)) - 1; // 0-based
-      const day = Number(s.slice(6, 8));
-      const d = new Date(Date.UTC(year, month, day));
-      return isNaN(d.getTime()) ? null : d;
-    }
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    if (/^\d{10}$/.test(s)) {
-      const d = new Date(Number(s) * 1000);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    if (/^\d{13}$/.test(s)) {
-      const d = new Date(Number(s));
-      return isNaN(d.getTime()) ? null : d;
-    }
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  };
-
-  const formatDate = (dateString?: string) => {
-    const d = parseBillDate(dateString);
-    return d
-      ? d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-      : "";
-  };
+  // Removed local parseBillDate and formatDate helpers in favor of shared utils
 
   const truncate = (s: string, n = 140) => (s.length <= n ? s : s.slice(0, n) + "…");
 

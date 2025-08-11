@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useConvexAuth, useQuery, useAction } from "convex/react";
+import { useQuery } from "convex/react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useConvex } from "convex/react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { parseBillDate, formatDate } from "@/utils/dates";
 
 // Responsive helper to detect mobile viewport
 function useIsMobile(breakpoint = 768) {
@@ -125,42 +126,7 @@ function chunkTextByDisplay(text: string, maxCharsPerLine = 280): Array<string> 
   return chunks;
 }
 
-// Add BillCard-style date parsing/formatting helpers
-function parseBillDate(input?: string): Date | null {
-  if (!input) return null;
-  const s = String(input).trim();
-  if (/^\d{8}$/.test(s)) {
-    const year = Number(s.slice(0, 4));
-    const month = Number(s.slice(4, 6)) - 1;
-    const day = Number(s.slice(6, 8));
-    const d = new Date(Date.UTC(year, month, day));
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (/^\d{10}$/.test(s)) {
-    const d = new Date(Number(s) * 1000);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (/^\d{13}$/.test(s)) {
-    const d = new Date(Number(s));
-    return isNaN(d.getTime()) ? null : d;
-  }
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function formatDate(dateString?: string) {
-  const d = parseBillDate(dateString);
-  return d
-    ? d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-    : "";
-}
-
 const BillPage: React.FC<PageProps> = ({ params }) => {
-  const { isAuthenticated } = useConvexAuth();
   const convex = useConvex();
   const isMobile = useIsMobile();
 
@@ -212,12 +178,44 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
         "Welcome! Ask me anything about this bill—scope, impact, changes to current law.",
     },
   ]);
-  const [isChatLoading, setIsChatLoading] = useState(false);
-
-  const chatAboutBill = useAction(api.agent.chatAboutBill);
+  const isChatLoading = false;
 
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [highlightRanges, setHighlightRanges] = useState<number[]>([]);
+
+  // Left/Right card refs to sync heights on desktop
+  const leftSummaryCardRef = useRef<HTMLDivElement | null>(null);
+  const rightTextCardRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const leftEl = leftSummaryCardRef.current;
+    const rightEl = rightTextCardRef.current;
+    if (!leftEl || !rightEl) return;
+
+    const syncHeights = () => {
+      const isDesktop = window.innerWidth >= 768;
+      if (!isDesktop) {
+        rightEl.style.height = "";
+        return;
+      }
+      const targetHeight = leftEl.offsetHeight;
+      rightEl.style.height = `${targetHeight}px`;
+    };
+
+    syncHeights();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => syncHeights());
+      ro.observe(leftEl);
+    }
+    window.addEventListener("resize", syncHeights);
+
+    return () => {
+      window.removeEventListener("resize", syncHeights);
+      if (ro && leftEl) ro.unobserve(leftEl);
+    };
+  }, [billWithSponsor, latestVersion, versions, versionText]);
 
   useEffect(() => {
     if (!selectedVersionId && latestVersion?._id) {
@@ -257,7 +255,6 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
     const text = versionText?.fullText ?? "";
     if (!text) return [] as Array<string>;
 
-    // Prefer natural newlines when present; otherwise, create virtual lines for display
     const split = text.split(/\r?\n/);
     if (split.length > 1) return split;
 
@@ -274,8 +271,6 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
     let cumulative = 0;
     let targetLineIdx = 0;
     for (let i = 0; i < lines.length; i++) {
-      // If the source had newlines and we split on them, add one to account for the removed newline char.
-      // If we generated virtual lines, do not add an extra character.
       cumulative += lines[i].length + (hasNewlines ? 1 : 0);
       if (cumulative >= charIndex) {
         targetLineIdx = i;
@@ -348,58 +343,25 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
     scrollToPosition(pos);
   };
 
-  const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedVersionId(e.target.value);
+  const handleVersionChange = (versionId: string) => {
+    setSelectedVersionId(versionId);
     setHighlightRanges([]);
   };
 
   const handleSendChat = async () => {
     const content = chatInput.trim();
-    if (!content || !billId || isChatLoading) return;
+    if (!content) return;
 
-    if (!isAuthenticated) {
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "user", content },
-        {
-          role: "assistant",
-          content:
-            "Please sign in to chat about this bill. This feature requires authentication to provide personalized responses.",
-        },
-      ]);
-      setChatInput("");
-      return;
-    }
-
-    setChatMessages((prev) => [...prev, { role: "user", content }]);
     setChatInput("");
-    setIsChatLoading(true);
-
-    try {
-      const response = await chatAboutBill({
-        billId: billId,
-        question: content,
-      });
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: response.answer,
-        },
-      ]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Sorry, I encountered an error processing your question. Please try again.",
-        },
-      ]);
-    } finally {
-      setIsChatLoading(false);
-    }
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", content },
+      {
+        role: "assistant",
+        content:
+          "Chat is coming soon! Follow @LLVarholdt on X/Twitter for updates.",
+      },
+    ]);
   };
 
   // Hover vs click state resolution
@@ -517,7 +479,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
               )}
               style={{ maxHeight: openDetails ? measuredHeight : 0, overflow: "hidden" }}
             >
-              <div className={classNames("md:p-5 p-4", openDetails ? "border-t border-[var(--color-border)]" : "border-t-0")}> 
+              <div className={classNames("md:p-5 p-4", openDetails ? "border-t border-[var(--color-border)]" : "border-t-0")}>
                 {bill?.tagline && (
                   <div className="section-block mb-3">
                     <div className="section-title">Overview</div>
@@ -617,7 +579,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
           <section className="md:col-span-1 space-y-4">
             {/* Desktop Tabs */}
             <div className="hidden md:block">
-              <div className="card p-0 overflow-hidden shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
+              <div ref={leftSummaryCardRef} className="card p-0 overflow-hidden shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60">
                 <DesktopTabs>
                   <DesktopTab label="AI Summary" defaultActive>
                     <AISummary
@@ -633,7 +595,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                       onChangeInput={setChatInput}
                       onSend={handleSendChat}
                       isLoading={isChatLoading}
-                      isAuthenticated={isAuthenticated}
+                      isAuthenticated={true}
                     />
                   </DesktopTab>
                 </DesktopTabs>
@@ -659,7 +621,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                     onChangeInput={setChatInput}
                     onSend={handleSendChat}
                     isLoading={isChatLoading}
-                    isAuthenticated={isAuthenticated}
+                    isAuthenticated={true}
                   />
                 </div>
               )}
@@ -668,24 +630,19 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
 
           {/* Right Pane: Bill Text */}
           <section className="hidden md:block md:col-span-1 mt-4 md:mt-0">
-            <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
-              {/* Header controls (sticky) */}
-              <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
+            <div ref={rightTextCardRef} className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden flex flex-col">
+              {/* Header controls */}
+              <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)]">
                 <div className="flex items-center gap-2">
                   <label className="text-sm text-[var(--color-muted-foreground)]">
                     Version
                   </label>
-                  <select
-                    className="px-2 py-1 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition"
+                  <VersionSelect
+                    versions={versions ?? []}
                     value={selectedVersionId ?? ""}
+                    latestVersionId={latestVersion?._id ?? null}
                     onChange={handleVersionChange}
-                  >
-                    {versions?.map((v: BillVersionData) => (
-                      <option key={v._id} value={v._id}>
-                        {v.versionCode} — {new Date(v.publishedDate).toLocaleDateString()}
-                      </option>
-                    )) ?? <option>Loading...</option>}
-                  </select>
+                  />
                   {versionText?.fullText && (
                     <span className="ml-auto text-xs text-[var(--color-muted-foreground)]">
                       {lines.length.toLocaleString()} lines
@@ -741,7 +698,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
 
               {/* Bill Text */}
               <div
-                className="h-[58vh] md:h-[72vh] overflow-auto bg-[var(--color-card-muted)]"
+                className="flex-1 overflow-auto bg-[var(--color-card-muted)]"
                 ref={textContainerRef}
                 style={{ fontFamily: "var(--font-mono)" }}
               >
@@ -779,17 +736,12 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
                 <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[var(--color-muted-foreground)]">Version</label>
-                    <select
-                      className="px-2 py-1 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition"
+                    <VersionSelect
+                      versions={versions ?? []}
                       value={selectedVersionId ?? ""}
+                      latestVersionId={latestVersion?._id ?? null}
                       onChange={handleVersionChange}
-                    >
-                      {versions?.map((v: BillVersionData) => (
-                        <option key={v._id} value={v._id}>
-                          {v.versionCode} — {new Date(v.publishedDate).toLocaleDateString()}
-                        </option>
-                      )) ?? <option>Loading...</option>}
-                    </select>
+                    />
                     {versionText?.fullText && (
                       <span className="ml-auto text-xs text-[var(--color-muted-foreground)]">
                         {lines.length.toLocaleString()} lines
@@ -928,14 +880,69 @@ const DesktopTabs: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const DesktopTab: React.FC<DesktopTabProps> = ({ children }) => <div>{children}</div>;
 
+const VersionSelect: React.FC<{
+  versions: Array<BillVersionData>;
+  value: string;
+  latestVersionId: Id<"billVersions"> | null;
+  onChange: (id: string) => void;
+}> = ({ versions, value, latestVersionId, onChange }) => {
+  const sortedVersions = React.useMemo(() => {
+    const cloned = [...versions];
+    cloned.sort((a, b) => {
+      const ta = parseBillDate(a.publishedDate)?.getTime() ?? 0;
+      const tb = parseBillDate(b.publishedDate)?.getTime() ?? 0;
+      return tb - ta;
+    });
+    return cloned;
+  }, [versions]);
+
+  const hasOptions = sortedVersions.length > 0;
+
+  return (
+    <div className="relative flex-1">
+      <select
+        aria-label="Version"
+        className="w-full px-2 pr-8 py-1 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition appearance-none"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={!hasOptions}
+        title={hasOptions ? "Select bill version" : "No versions available"}
+      >
+        <option value="" disabled>
+          {hasOptions ? "Select a version…" : "No versions available"}
+        </option>
+        {sortedVersions.map((v) => {
+          const label = `${v.versionCode} — ${formatDate(v.publishedDate)}${latestVersionId && v._id === latestVersionId ? " (Latest)" : ""}`;
+          return (
+            <option key={v._id} value={v._id} title={v.title}>
+              {label}
+            </option>
+          );
+        })}
+      </select>
+      <svg
+        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-muted-foreground)]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        aria-hidden
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  );
+};
+
 const AISummary: React.FC<{
   bill?: BillData;
   parsedChangeAnalysis: ChangeAnalysisItem[];
   onCitationClick: (sectionId: string) => void;
 }> = ({ bill, parsedChangeAnalysis, onCitationClick }) => {
+  const isMobile = useIsMobile();
+
   const renderSummaryWithCitations = (text: string) => {
     const parts: React.ReactNode[] = [];
-    const regex = /\[([^\]]+)\]\(section:([^)]+)\)|\{([^|}]+)\|([^\}]+)\}/g;
+    const regex = /\[([^\]]+)\]\(section:([^\)]+)\)|\{([^|}]+)\|([^\}]+)\}/g;
     let lastIdx = 0;
     let match;
     while ((match = regex.exec(text))) {
@@ -987,10 +994,7 @@ const AISummary: React.FC<{
           </h3>
           <div className="space-y-3">
             {bill.structuredSummary.map((sec, idx) => (
-              <div key={idx} className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-[var(--color-card)]">
-                <div className="px-3 py-2 bg-[var(--color-card-muted)]/70 border-b border-[var(--color-border)] font-medium">
-                  {sec.title}
-                </div>
+              <ExpandableSectionCard key={idx} title={sec.title} isMobile={isMobile}>
                 <div className="p-3 text-sm leading-relaxed whitespace-pre-wrap">
                   {sec.text}
                 </div>
@@ -1011,7 +1015,7 @@ const AISummary: React.FC<{
                     </div>
                   </div>
                 )}
-              </div>
+              </ExpandableSectionCard>
             ))}
           </div>
         </div>
@@ -1031,15 +1035,7 @@ const AISummary: React.FC<{
         ) : (
           <div className="space-y-3">
             {parsedChangeAnalysis.map((item, idx) => (
-              <div
-                key={idx}
-                className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-[var(--color-card)]"
-              >
-                {item.title && (
-                  <div className="px-3 py-2 bg-[var(--color-card-muted)]/70 border-b border-[var(--color-border)] font-medium">
-                    {item.title}
-                  </div>
-                )}
+              <ExpandableSectionCard key={idx} title={item.title ?? `Item ${idx + 1}`} isMobile={isMobile}>
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="p-3">
                     <div className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)] mb-1">
@@ -1077,7 +1073,7 @@ const AISummary: React.FC<{
                     </div>
                   </div>
                 )}
-              </div>
+              </ExpandableSectionCard>
             ))}
           </div>
         )}
@@ -1153,6 +1149,78 @@ const ChatBox: React.FC<{
         >
           {isLoading ? "Sending..." : "Send"}
         </button>
+      </div>
+    </div>
+  );
+};
+
+// Expandable card used for each Key Section and Change Analysis item
+const ExpandableSectionCard: React.FC<{
+  title: string;
+  isMobile: boolean;
+  children: React.ReactNode;
+}> = ({ title, isMobile, children }) => {
+  const [isHovering, setIsHovering] = useState(false);
+  const [isOpenMobile, setIsOpenMobile] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  const isOpen = isMobile ? isOpenMobile : isHovering;
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const update = () => setContentHeight(el.scrollHeight);
+    update();
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(update);
+      ro.observe(el);
+    }
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      if (ro && el) ro.unobserve(el);
+    };
+  }, []);
+
+  return (
+    <div
+      className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-[var(--color-card)] card-hover-lift"
+      onMouseEnter={() => !isMobile && setIsHovering(true)}
+      onMouseLeave={() => !isMobile && setIsHovering(false)}
+    >
+      <button
+        type="button"
+        className="relative w-full text-left px-3 py-2 flex items-center gap-3 bg-[var(--color-card)] hover:bg-[var(--color-card-muted)]/60 transition-colors header-bar"
+        onClick={() => {
+          if (isMobile) setIsOpenMobile((o) => !o);
+        }}
+        aria-expanded={isOpen}
+      >
+        <div className="flex-1 min-w-0 font-medium">{title}</div>
+        <svg
+          className={classNames(
+            "w-5 h-5 text-[var(--color-muted-foreground)] transition-transform",
+            isOpen ? "rotate-180" : "rotate-0"
+          )}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div
+        ref={contentRef}
+        className={classNames(
+          "transition-[max-height,opacity,transform] duration-300 ease-out",
+          isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+        )}
+        style={{ maxHeight: isOpen ? contentHeight : 0, overflow: "hidden" }}
+      >
+        {children}
       </div>
     </div>
   );

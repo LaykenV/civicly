@@ -261,7 +261,6 @@ body {
 .card:hover {
   border-color: hsla(233, 85%, 60%, 0.35);
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
 /* Aurora card with subtle conic gradient glow around border */
@@ -828,4 +827,27 @@ body {
 
 .dark .section-block {
   background: linear-gradient(180deg, var(--color-card), transparent 100%);
+}
+
+/* Version dropdown sizing: narrow the container that holds the select with aria-label="Version" */
+/* This targets the wrapper div used in VersionSelect without changing TSX. */
+@supports selector(div:has(> select[aria-label="Version"])) {
+  div:has(> select[aria-label="Version"]) {
+    /* Override flex-1 from the wrapper to prevent it from stretching full width */
+    flex: 0 0 auto;
+    width: clamp(12rem, 30vw, 18rem);
+    max-width: 100%;
+  }
+  /* Ensure the select fills the constrained wrapper width */
+  select[aria-label="Version"] {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  @supports selector(div:has(> select[aria-label="Version"])) {
+    div:has(> select[aria-label="Version"]) {
+      width: clamp(10rem, 50vw, 14rem);
+    }
+  }
 }

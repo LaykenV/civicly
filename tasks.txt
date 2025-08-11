@@ -35,8 +35,8 @@ bills page:
 //custom components 21st dev ?
 
 summary accordions
-chat coming soon
-invalid date on version picker
+//chat coming soon
+//invalid date on version picker
 
 logo
 
