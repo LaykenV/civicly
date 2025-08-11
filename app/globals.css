@@ -168,10 +168,12 @@ html {
   scroll-behavior: smooth;
   /* Solid base color so the OS status bar/notch area matches */
   background-color: white;
+  color-scheme: light;
 }
 
 html.dark {
   background-color: black;
+  color-scheme: dark;
 }
 
 body {
