@@ -594,7 +594,6 @@ function HeroSearch() {
 
   const handleResultClick = (result: BillSearchResult) => {
     router.push(`/bills/${result.billId}`);
-    console.log(result);
     setShowDropdown(false);
     setValue("");
   };
