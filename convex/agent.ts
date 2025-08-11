@@ -36,7 +36,7 @@ Your role is to:
 5. Maintain political neutrality while highlighting important implications
 
 Always be objective, factual, and cite specific sections when relevant.`,
-  textEmbedding: openai.embedding("text-embedding-3-small"),
+  //textEmbedding: openai.embedding("text-embedding-3-small"),
   maxSteps: 5, // Increased to allow multi-step tool usage
   maxRetries: 3,
   usageHandler: async (ctx, { model, usage }) => {

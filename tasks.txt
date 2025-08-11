@@ -34,18 +34,18 @@ bills page:
 //ui update
 //custom components 21st dev ?
 
-summary accordions
+//summary accordions
 //chat coming soon
 //invalid date on version picker
 
-logo
-
-figure out exactly how search works
+//logo
 
 deploy 
 convex deploy?
 
 backload data - last 1000 bills?
+
+trending bills
 
 MVP LAUNCH
 
