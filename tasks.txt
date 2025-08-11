@@ -23,26 +23,34 @@ Pipeline:
 
 
 bills page:
-ui tweaks - top is foldable, coming soon, header?, dock, floating animation on hover, chat and summary together
-debounce search and highlight
+//ui tweaks - top is foldable, coming soon, header?, dock, floating animation on hover, chat and summary together
+//debounce search and highlight
 //header across app
 
 //sign in page ui
 
 //coming soon page
 
-ui update
-custom components 21st dev ?
+//ui update
+//custom components 21st dev ?
+
+summary accordions
+chat coming soon
+invalid date on version picker
+
 logo
 
-deploy
+figure out exactly how search works
 
-prompt with page and data and get ideas
-finalize idea, list of components Needed
-browse nice components
+deploy 
+convex deploy?
 
 backload data - last 1000 bills?
+
 MVP LAUNCH
+
+add dock with x, input in center, share on right
+when input is sent, open side drawer for chat interface
 
 chat with full text? need agent for long bills. ask agent with summary, then ask for vector searches, then use those as context again.
 

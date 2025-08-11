@@ -264,12 +264,143 @@ body {
   transform: translateY(-2px);
 }
 
-.card-solid {
-  background-color: var(--color-card-solid);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(24px);
+/* Aurora card with subtle conic gradient glow around border */
+.card-aurora {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.card-aurora::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    hsl(233 85% 60% / 0.18),
+    hsl(43 74% 52% / 0.16),
+    hsl(233 85% 60% / 0.18)
+  );
+  filter: blur(28px);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.card-aurora:hover::before {
+  opacity: 0.38;
+}
+
+/* Gentle hover lift + stronger shadow */
+.card-hover-lift {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Sheen accent that sweeps across on hover */
+.card-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-sheen::after {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -30%;
+  width: 60%;
+  height: 300%;
+  transform: rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.08) 45%,
+    hsl(0 0% 100% / 0.18) 50%,
+    hsl(0 0% 100% / 0.08) 55%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 400ms ease, transform 900ms ease;
+  pointer-events: none;
+}
+
+.card-sheen:hover::after {
+  opacity: 1;
+  transform: translateX(140%) rotate(20deg);
+}
+
+/* Decorative meta text (kicker) */
+.kicker {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+/* Inline gradient dot */
+.deco-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  box-shadow: 0 0 0 2px hsl(0 0% 100% / 0.6);
+}
+
+.dark .deco-dot {
+  box-shadow: 0 0 0 2px hsl(220 28% 12% / 0.8);
+}
+
+/* Avatar circle with subtle ring */
+.avatar-circle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, var(--color-primary-65), var(--color-primary));
+  box-shadow: 0 0 0 2px hsl(0 0% 100% / 0.6);
+}
+
+.dark .avatar-circle {
+  box-shadow: 0 0 0 2px hsl(220 28% 12% / 0.8);
+}
+
+/* Fancy link underline + hover motion */
+.btn-link {
+  position: relative;
+  color: var(--color-primary-55);
+  font-weight: 600;
+  transition: color 200ms ease, transform 200ms ease;
+}
+
+.btn-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: transform 240ms ease;
+}
+
+.btn-link:hover {
+  color: var(--color-primary);
+}
+
+.btn-link:hover::after {
+  transform: scaleX(1);
 }
 
 /* Status Badges */
@@ -333,6 +464,7 @@ body {
 .icon-button:hover {
   color: var(--color-foreground);
   background-color: var(--color-hover-bg);
+  transform: translateY(-1px);
 }
 
 .icon-button:focus-visible {
@@ -593,4 +725,107 @@ body {
 .hamburger input:checked + svg .line-top-bottom {
   stroke-dasharray: 20 300;
   stroke-dashoffset: -32.42;
+}
+
+/* Subtle divider used inside cards */
+.card-divider {
+  border-top: 1px solid var(--color-border);
+}
+
+/* CTA button used inside cards */
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 10px 20px -12px hsla(233, 85%, 60%, 0.5);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.btn-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px -12px hsla(233, 85%, 60%, 0.6);
+  filter: saturate(1.05);
+}
+
+.btn-cta:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsla(233, 85%, 60%, 0.45), 0 12px 28px -16px hsla(233, 85%, 60%, 0.45);
+}
+
+/* Header accent bar for expandable card */
+.header-bar {
+  position: relative;
+}
+.header-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  background: linear-gradient(90deg, hsl(233 85% 60% / 0.18), hsl(43 74% 52% / 0.18));
+  opacity: 0.25;
+  mask: linear-gradient(to bottom, black 0%, black 64%, transparent 100%);
+}
+
+/* Section block with subtle background and border */
+.section-block {
+  background: linear-gradient(180deg, var(--color-card), transparent 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+}
+
+.section-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  color: var(--color-foreground-dark);
+  margin-bottom: 0.35rem;
+}
+
+/* Reusable pill chip */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-card-muted);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+.pill:hover {
+  border-color: hsla(233, 85%, 60%, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Progress track and fill */
+.progress-track {
+  position: relative;
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--color-border) 0%, rgba(0,0,0,0) 100%);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  box-shadow: inset 0 0 0 1px hsla(0,0%,100%,0.25);
+  transition: width 400ms ease;
+}
+
+.dark .section-block {
+  background: linear-gradient(180deg, var(--color-card), transparent 100%);
 }

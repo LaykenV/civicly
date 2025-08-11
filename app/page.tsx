@@ -925,10 +925,38 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function BillCard({ bill }: { bill: Bill }) {
-  const formatDate = (dateString?: string) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+  const parseBillDate = (input?: string): Date | null => {
+    if (!input) return null;
+    const s = String(input).trim();
+    if (/^\d{8}$/.test(s)) {
+      const year = Number(s.slice(0, 4));
+      const month = Number(s.slice(4, 6)) - 1; // 0-based
+      const day = Number(s.slice(6, 8));
+      const d = new Date(Date.UTC(year, month, day));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (/^\d{10}$/.test(s)) {
+      const d = new Date(Number(s) * 1000);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (/^\d{13}$/.test(s)) {
+      const d = new Date(Number(s));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatDate = (dateString?: string) => {
+    const d = parseBillDate(dateString);
+    return d
+      ? d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
       : "";
+  };
 
   const truncate = (s: string, n = 140) => (s.length <= n ? s : s.slice(0, n) + "…");
 
@@ -938,20 +966,14 @@ function BillCard({ bill }: { bill: Bill }) {
         "group rounded-2xl p-6 h-full flex flex-col",
         "bg-[var(--color-card)] border border-[var(--color-border)]",
         "hover:border-[var(--color-primary)]/40 hover:shadow-xl",
-        "transition-all"
+        "transition-all",
+        "card-aurora card-hover-lift card-sheen"
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="text-xs text-[var(--color-muted)]">
-          {bill.congress}th Congress • {bill.billType.toUpperCase()} {bill.billNumber}
-        </div>
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <Link
-            href={`/bills/${bill._id}`}
-            className="text-[var(--color-primary-55)] hover:text-[var(--color-primary)] text-xs font-semibold"
-          >
-            Details →
-          </Link>
+        <div className="kicker inline-flex items-center gap-2">
+          <span className="deco-dot" aria-hidden />
+          {bill.congress}th • {bill.billType.toUpperCase()} {bill.billNumber}
         </div>
       </div>
 
@@ -968,16 +990,21 @@ function BillCard({ bill }: { bill: Bill }) {
       <div className="flex items-center gap-3 mb-4">
         <StatusBadge status={bill.status} />
         {bill.latestActionDate && (
-          <time dateTime={bill.latestActionDate} className="text-xs text-[var(--color-muted)]">
-            {formatDate(bill.latestActionDate)}
-          </time>
+          (() => {
+            const d = parseBillDate(bill.latestActionDate);
+            const display = formatDate(bill.latestActionDate);
+            return d ? (
+              <time dateTime={d.toISOString()} className="text-xs text-[var(--color-muted)]">
+                {display}
+              </time>
+            ) : null;
+          })()
         )}
       </div>
 
       {bill.sponsor && (
         <div className="text-sm text-[var(--color-muted-dark)] mb-4">
-          <span className="font-medium">Sponsor:</span> {bill.sponsor.name}{" "}
-          <span className="text-xs">({bill.sponsor.party}-{bill.sponsor.state})</span>
+          <span className="font-medium">Sponsor:</span> {bill.sponsor.name}
         </div>
       )}
 
@@ -992,7 +1019,7 @@ function BillCard({ bill }: { bill: Bill }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--color-border)]">
+      <div className="flex items-center justify-between mt-auto pt-4 card-divider">
         <div className="flex items-center space-x-2">
           <IconButton title="Follow">
             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -1017,9 +1044,12 @@ function BillCard({ bill }: { bill: Bill }) {
         </div>
         <Link
           href={`/bills/${bill._id}`}
-          className="text-[var(--color-primary-55)] hover:text-[var(--color-primary-65)] transition-colors text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60 rounded px-1"
+          className="btn-cta text-sm"
         >
-          Read More →
+          Read More
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
       </div>
     </article>
@@ -1033,8 +1063,8 @@ function Footer() {
     <footer id="about" className="relative mt-16 bg-gradient-to-b from-transparent to-[color:var(--color-card)]">
       <div aria-hidden className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/50 to-transparent" />
       <div className="px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="col-span-1 md:col-span-2">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-10">
+          <div className="col-span-2 md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-lg bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))]" />
               <h3 className="text-lg font-heading font-bold bg-clip-text text-transparent bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))]">

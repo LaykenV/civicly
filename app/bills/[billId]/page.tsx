@@ -8,12 +8,16 @@ import { useConvex } from "convex/react";
 import Link from "next/link";
 import Header from "@/components/Header";
 
-function Tooltip({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="absolute left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap text-xs px-2 py-1 rounded bg-[var(--color-card)] border border-[var(--color-border)] shadow-sm">
-      {children}
-    </div>
-  );
+// Responsive helper to detect mobile viewport
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < breakpoint);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [breakpoint]);
+  return isMobile;
 }
 
 // Props from Next.js dynamic routing
@@ -89,9 +93,9 @@ const lifecycleOrder = [
 ];
 
 function getLifecycleProgress(status?: string) {
-  if (!status) return 0;
+  if (!status) return 0.1;
   const idx = lifecycleOrder.indexOf(status);
-  if (idx < 0) return 0;
+  if (idx < 0) return 0.1;
   return (idx + 1) / lifecycleOrder.length;
 }
 
@@ -121,9 +125,44 @@ function chunkTextByDisplay(text: string, maxCharsPerLine = 280): Array<string> 
   return chunks;
 }
 
+// Add BillCard-style date parsing/formatting helpers
+function parseBillDate(input?: string): Date | null {
+  if (!input) return null;
+  const s = String(input).trim();
+  if (/^\d{8}$/.test(s)) {
+    const year = Number(s.slice(0, 4));
+    const month = Number(s.slice(4, 6)) - 1;
+    const day = Number(s.slice(6, 8));
+    const d = new Date(Date.UTC(year, month, day));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{10}$/.test(s)) {
+    const d = new Date(Number(s) * 1000);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{13}$/.test(s)) {
+    const d = new Date(Number(s));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDate(dateString?: string) {
+  const d = parseBillDate(dateString);
+  return d
+    ? d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+    : "";
+}
+
 const BillPage: React.FC<PageProps> = ({ params }) => {
   const { isAuthenticated } = useConvexAuth();
   const convex = useConvex();
+  const isMobile = useIsMobile();
 
   const [billId, setBillId] = useState<Id<"bills"> | null>(null);
 
@@ -160,7 +199,8 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
   const [isSearching, setIsSearching] = useState(false);
 
   const [activeMobileTab, setActiveMobileTab] = useState<MobileTabType>("summary");
-  const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<
@@ -362,7 +402,18 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
     }
   };
 
-  const disabledPro = !isAuthenticated;
+  // Hover vs click state resolution
+  const detailsRef = useRef<HTMLDivElement | null>(null);
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+  const openDetails = isMobile ? detailsOpen : isHovering;
+  useEffect(() => {
+    const el = detailsRef.current;
+    if (!el) return;
+    const update = () => setMeasuredHeight(el.scrollHeight);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [bill?.tagline, impactAreas.length, lifecycleProgress, detailsOpen, isHovering, isMobile]);
 
   if (!billId) {
     return (
@@ -390,214 +441,147 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
       <Header />
       <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)] pt-16">
         {/* Top Nav / Back */}
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-[var(--color-primary)] hover:opacity-90 transition"
-          >
-            <span className="text-base">←</span>
-            <span>Back</span>
-          </Link>
-          {bill?.latestActionDate && (
-            <div className="hidden md:flex items-center gap-2 text-xs text-[var(--color-muted-foreground)]">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
-              Updated {new Date(bill.latestActionDate).toLocaleDateString()}
-            </div>
-          )}
-        </div>
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-end gap-3" />
 
         {/* Header */}
         <header className="max-w-7xl mx-auto px-4">
-          <div className="card p-5 md:p-6 shadow-[var(--shadow-lg)] rounded-xl border border-[var(--color-border)]/60">
-            <div className="flex flex-col md:flex-row md:items-start gap-5 md:gap-6">
-              {/* Avatar / Sponsor */}
-              <div className="flex items-center gap-3 md:w-1/4">
-                <div
-                  className="w-12 h-12 rounded-full bg-[var(--color-card-muted)] flex items-center justify-center text-sm select-none"
-                  aria-hidden
-                >
-                  {sponsor?.name ? sponsor.name.split(" ").map(n => n[0]).slice(0,2).join("") : "👤"}
-                </div>
-                <div className="text-sm">
-                  <div className="font-medium leading-tight">
-                    {sponsor?.name ?? <span className="opacity-60">—</span>}
-                  </div>
-                  <div className="text-[var(--color-muted-foreground)]">
-                    {sponsor ? `${sponsor.party} • ${sponsor.state}` : "—"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Bill core info */}
-              <div className="flex-1">
+          <div
+            className="card p-0 shadow-[var(--shadow-lg)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden"
+            onMouseEnter={() => !isMobile && setIsHovering(true)}
+            onMouseLeave={() => !isMobile && setIsHovering(false)}
+          >
+            {/* Top bar (accordion header) */}
+            <button
+              type="button"
+              className="relative w-full text-left p-4 md:p-5 flex items-start gap-4 bg-[var(--color-card)] hover:bg-[var(--color-card-muted)]/60 transition-colors header-bar"
+              onClick={() => {
+                if (isMobile) setDetailsOpen((o) => !o);
+              }}
+              aria-expanded={openDetails}
+            >
+              <div className="flex-1 min-w-0 pr-10 md:pr-12">
                 <div className="text-xs md:text-sm font-medium text-[var(--color-muted-foreground)]">
                   {bill
-                    ? `${bill.congress}th Congress — ${bill.billType} ${bill.billNumber}`
+                    ? `${bill.congress}th — ${bill.billType} ${bill.billNumber}`
                     : "Loading..."}
                 </div>
                 <h1
-                  className="mt-1 text-2xl md:text-3xl leading-snug tracking-tight"
+                  className="mt-1 text-lg md:text-2xl leading-snug tracking-tight line-clamp-2"
                   style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {bill?.title ?? (
                     <span className="inline-block h-6 w-2/3 bg-[var(--color-card-muted)] rounded animate-pulse" />
                   )}
                 </h1>
-                {bill?.tagline ? (
-                  <div className="mt-1 text-[var(--color-muted-foreground)]">
-                    {bill.tagline}
-                  </div>
-                ) : null}
-
-                {/* Status and lifecycle */}
-                <div className="mt-3 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={classNames(
-                        "inline-flex items-center px-2 py-1 rounded-full text-xs shadow-sm border border-[var(--color-border)]/70",
-                        statusClass
-                      )}
-                      title="Current status"
-                    >
-                      {bill?.status ?? "—"}
-                    </span>
-                    <span className="text-xs text-[var(--color-muted-foreground)]">
-                      Legislative progress
-                    </span>
-                  </div>
-                  <div className="relative h-2 rounded-full bg-[var(--color-border)]/70 overflow-hidden">
-                    <div
-                      className="absolute left-0 top-0 h-full bg-[var(--color-primary)] transition-[width] duration-500"
-                      style={{ width: `${Math.round(lifecycleProgress * 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-[var(--color-muted-foreground)] uppercase tracking-wide">
-                    {lifecycleOrder.map((step) => (
-                      <span key={step} className="w-1/5 text-center">
-                        {step.replace("_", " ")}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span
+                    className={classNames(
+                      "inline-flex items-center px-2 py-1 rounded-full text-xs shadow-sm border border-[var(--color-border)]/70",
+                      statusClass
+                    )}
+                    title="Current status"
+                  >
+                    {bill?.status ?? "—"}
+                  </span>
+                  {bill?.latestActionDate && (() => {
+                    const d = parseBillDate(bill.latestActionDate);
+                    const display = formatDate(bill.latestActionDate);
+                    return d ? (
+                      <span className="text-xs text-[var(--color-muted-foreground)]">
+                        Updated <time dateTime={d.toISOString()}>{display}</time>
                       </span>
-                    ))}
-                  </div>
+                    ) : null;
+                  })()}
                 </div>
+              </div>
+              <svg
+                className={classNames(
+                  "absolute right-4 md:right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-muted-foreground)] transition-transform",
+                  openDetails ? "rotate-180" : "rotate-0"
+                )}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                aria-hidden
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-                {/* Impact Areas */}
-                {impactAreas.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {impactAreas.map((area: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-1 rounded-full text-xs bg-[var(--color-card-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/60 transition-colors"
-                      >
-                        {area}
-                      </span>
-                    ))}
+            {/* Expanded details with animated height */}
+            <div
+              ref={detailsRef}
+              className={classNames(
+                "bg-[var(--color-card)] transition-[max-height,opacity,transform] duration-300 ease-out",
+                openDetails ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+              )}
+              style={{ maxHeight: openDetails ? measuredHeight : 0, overflow: "hidden" }}
+            >
+              <div className={classNames("md:p-5 p-4", openDetails ? "border-t border-[var(--color-border)]" : "border-t-0")}> 
+                {bill?.tagline && (
+                  <div className="section-block mb-3">
+                    <div className="section-title">Overview</div>
+                    <div className="text-[var(--color-muted-foreground)]">{bill.tagline}</div>
                   </div>
                 )}
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-start gap-2 md:flex-col md:items-end">
-                <div
-                  onMouseEnter={() => setHoveredTooltip("follow")}
-                  onMouseLeave={() => setHoveredTooltip(null)}
-                  className="relative"
-                >
-                  <button
-                    className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition disabled:opacity-60"
-                    disabled
-                  >
-                    ★ Follow
-                  </button>
-                  {hoveredTooltip === "follow" && (
-                    <Tooltip>Coming Soon!</Tooltip>
-                  )}
+                {(sponsor?.name || (bill?.committees && bill.committees.length > 0)) && (
+                  <div className="section-block mb-3">
+                    <div className="section-title">Sponsor & Committees</div>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {sponsor?.name && (
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)] mb-1">Sponsor</div>
+                          <div className="text-sm">{sponsor.name}</div>
+                        </div>
+                      )}
+                      {bill?.committees && bill.committees.length > 0 && (
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)] mb-1">Committees</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {bill.committees.map((c, i) => (
+                              <span key={i} className="pill">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="section-block mb-3">
+                  <div className="section-title">Legislative Status</div>
+                  <div className="mt-2">
+                    <div className="progress-track">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${Math.round(lifecycleProgress * 100)}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--color-muted-foreground)] uppercase tracking-wide">
+                      {lifecycleOrder.map((step) => (
+                        <span key={step} className="w-1/5 text-center">
+                          {step.replace("_", " ")}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <button
-                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(window.location.href);
-                    } catch {}
-                  }}
-                  title="Copy link"
-                >
-                  ⤴ Share
-                </button>
-                <div
-                  onMouseEnter={() => setHoveredTooltip("vote")}
-                  onMouseLeave={() => setHoveredTooltip(null)}
-                  className="relative"
-                >
-                  <button
-                    className="btn-primary disabled:opacity-60"
-                    disabled={true || disabledPro}
-                  >
-                    Cast My Vote
-                  </button>
-                  {hoveredTooltip === "vote" && (
-                    <Tooltip>Coming Soon!</Tooltip>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* Secondary actions */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <div
-                onMouseEnter={() => setHoveredTooltip("impact")}
-                onMouseLeave={() => setHoveredTooltip(null)}
-                className="relative"
-              >
-                <button
-                  className="px-3 py-2 rounded-md text-sm text-white hover:opacity-95 transition"
-                  style={{ background: "var(--color-accent)" }}
-                  disabled
-                >
-                  Analyze Impact on Me
-                </button>
-                {hoveredTooltip === "impact" && <Tooltip>Coming Soon!</Tooltip>}
-              </div>
-
-              <div
-                onMouseEnter={() => setHoveredTooltip("compare")}
-                onMouseLeave={() => setHoveredTooltip(null)}
-                className="relative"
-              >
-                <button
-                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm hover:bg-[var(--color-card-muted)] transition disabled:opacity-60"
-                  disabled
-                >
-                  Compare Versions
-                </button>
-                {hoveredTooltip === "compare" && <Tooltip>Coming Soon!</Tooltip>}
-              </div>
-
-              <div
-                onMouseEnter={() => setHoveredTooltip("cosponsors")}
-                onMouseLeave={() => setHoveredTooltip(null)}
-                className="relative"
-              >
-                <button
-                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm disabled:opacity-60"
-                  disabled
-                >
-                  Cosponsors (0)
-                </button>
-                {hoveredTooltip === "cosponsors" && <Tooltip>Coming Soon!</Tooltip>}
-              </div>
-
-              <div
-                onMouseEnter={() => setHoveredTooltip("committees")}
-                onMouseLeave={() => setHoveredTooltip(null)}
-                className="relative"
-              >
-                <button
-                  className="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm disabled:opacity-60"
-                  disabled
-                >
-                  Committees: {bill?.committees?.join(", ") ?? "—"}
-                </button>
-                {hoveredTooltip === "committees" && <Tooltip>Coming Soon!</Tooltip>}
+                {impactAreas.length > 0 && (
+                  <div className="section-block">
+                    <div className="section-title">Impact Areas</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {impactAreas.map((area: string, idx: number) => (
+                        <span key={idx} className="pill">
+                          {area}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -683,7 +667,7 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
           </section>
 
           {/* Right Pane: Bill Text */}
-          <section className="md:col-span-1 mt-4 md:mt-0">
+          <section className="hidden md:block md:col-span-1 mt-4 md:mt-0">
             <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
               {/* Header controls (sticky) */}
               <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
@@ -790,7 +774,106 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
           </section>
 
           {activeMobileTab === "text" && (
-            <div className="md:hidden col-span-2 mt-4" />
+            <section className="md:hidden mt-4">
+              <div className="card p-0 shadow-[var(--shadow-md)] rounded-xl border border-[var(--color-border)]/60 overflow-hidden">
+                <div className="p-3 border-b border-[var(--color-border)] flex flex-col gap-2 bg-[var(--color-card)] sticky top-[0] z-10">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-[var(--color-muted-foreground)]">Version</label>
+                    <select
+                      className="px-2 py-1 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition"
+                      value={selectedVersionId ?? ""}
+                      onChange={handleVersionChange}
+                    >
+                      {versions?.map((v: BillVersionData) => (
+                        <option key={v._id} value={v._id}>
+                          {v.versionCode} — {new Date(v.publishedDate).toLocaleDateString()}
+                        </option>
+                      )) ?? <option>Loading...</option>}
+                    </select>
+                    {versionText?.fullText && (
+                      <span className="ml-auto text-xs text-[var(--color-muted-foreground)]">
+                        {lines.length.toLocaleString()} lines
+                      </span>
+                    )}
+                  </div>
+
+                  <form className="flex gap-2 items-center" onSubmit={handleSearch}>
+                    <input
+                      className="search-input flex-1"
+                      placeholder="Search bill text..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <button
+                      className="btn-primary disabled:opacity-60"
+                      type="submit"
+                      disabled={isSearching}
+                    >
+                      {isSearching ? "Searching..." : "Search"}
+                    </button>
+                  </form>
+
+                  {searchResults.length > 0 && (
+                    <div className="max-h-44 overflow-auto border border-[var(--color-border)] rounded-md bg-[var(--color-card)]">
+                      {searchResults.map((r: SearchResult, idx: number) => (
+                        <button
+                          key={idx}
+                          className="w-full text-left p-2 hover:bg-[var(--color-card-muted)] border-b last:border-b-0 border-[var(--color-border)] transition group"
+                          onClick={() => handleClickSearchResult(r.position)}
+                          title="Jump to position in text"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-[var(--color-muted-foreground)]">
+                              Match at position {r.position}
+                            </div>
+                            <span className="opacity-0 group-hover:opacity-100 text-[var(--color-primary)] text-xs transition">
+                              Jump →
+                            </span>
+                          </div>
+                          <div className="text-sm line-clamp-2 mt-0.5">{r.excerpt}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.length === 0 && searchTerm && !isSearching && (
+                    <div className="text-xs text-[var(--color-muted-foreground)]">
+                      No matches for “{searchTerm}”.
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="h-[58vh] overflow-auto bg-[var(--color-card-muted)]"
+                  ref={textContainerRef}
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  {lines.length === 0 ? (
+                    <div className="p-6 text-sm text-[var(--color-muted-foreground)]">
+                      {versionIdToLoad ? "Loading bill text..." : "Select a version"}
+                    </div>
+                  ) : (
+                    <div className="p-4">
+                      {lines.map((ln: string, i: number) => {
+                        const highlighted = highlightRanges.includes(i);
+                        return (
+                          <div
+                            key={i}
+                            data-line-index={i}
+                            className={classNames(
+                              "whitespace-pre-wrap break-words py-0.5 rounded-sm px-1",
+                              highlighted &&
+                                "bg-[var(--color-primary)]/15 outline outline-1 outline-[var(--color-primary)]/40 transition-colors"
+                            )}
+                          >
+                            {ln || " "}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
           )}
         </main>
 
