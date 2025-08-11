@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import type { Viewport } from "next";
 import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ThemeProvider } from "next-themes";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "Civicly - Making Complex Legislation Accessible",
@@ -54,6 +61,16 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
+  },
+  // Ensure browser UI (address bar/status bar) matches our background on mobile
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "hsl(225, 40%, 95%)" },
+    { media: "(prefers-color-scheme: dark)", color: "hsl(220, 30%, 12%)" },
+  ],
+  // Let iOS overlay the status bar so background shows behind the notch
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
   },
 };
 
