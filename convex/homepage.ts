@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 // ===== MAIN DATA QUERIES =====
 
@@ -73,6 +74,87 @@ export const getLatestBills = query({
     );
     
     return billsWithSponsors;
+  },
+});
+
+/**
+ * Get four specific trending bills by id, in fixed order.
+ */
+export const getTrendingBills = query({
+  args: {},
+  returns: v.array(v.object({
+    _id: v.id("bills"),
+    congress: v.number(),
+    billType: v.string(),
+    billNumber: v.string(),
+    title: v.string(),
+    tagline: v.optional(v.string()),
+    status: v.string(),
+    latestActionDate: v.optional(v.string()),
+    impactAreas: v.optional(v.array(v.string())),
+    sponsor: v.optional(v.object({
+      name: v.string(),
+      party: v.string(),
+      state: v.string(),
+      chamber: v.union(v.literal("House"), v.literal("Senate")),
+    }))
+  })),
+  handler: async (ctx) => {
+    const trendingIds: Array<Id<"bills"> > = [
+      "kn7b323dsbq8dpbvfgssj8ffrx7nft5n" as Id<"bills">,
+      "kn776d3j2z2fnx9155b1dtqjmd7nfaf2" as Id<"bills">,
+      "kn7a2j4w8spx5wbv9g223m0br97ne59e" as Id<"bills">,
+      "kn7fgx0dsw9xs2b4x1a5ksbp4h7nfja7" as Id<"bills">,
+    ];
+
+    const results = [] as Array<{
+      _id: Id<"bills">;
+      congress: number;
+      billType: string;
+      billNumber: string;
+      title: string;
+      tagline?: string;
+      status: string;
+      latestActionDate?: string;
+      impactAreas?: Array<string>;
+      sponsor?: { name: string; party: string; state: string; chamber: "House" | "Senate" };
+    }>;
+
+    for (const billId of trendingIds) {
+      const bill = await ctx.db.get(billId);
+      if (!bill) continue;
+
+      let sponsor = undefined as
+        | { name: string; party: string; state: string; chamber: "House" | "Senate" }
+        | undefined;
+
+      if (bill.sponsorId) {
+        const sponsorDoc = await ctx.db.get(bill.sponsorId);
+        if (sponsorDoc) {
+          sponsor = {
+            name: sponsorDoc.name,
+            party: sponsorDoc.party,
+            state: sponsorDoc.state,
+            chamber: sponsorDoc.chamber,
+          };
+        }
+      }
+
+      results.push({
+        _id: bill._id,
+        congress: bill.congress,
+        billType: bill.billType,
+        billNumber: bill.billNumber,
+        title: bill.title,
+        tagline: bill.tagline,
+        status: bill.status,
+        latestActionDate: bill.latestActionDate,
+        impactAreas: bill.impactAreas,
+        sponsor,
+      });
+    }
+
+    return results;
   },
 });
 

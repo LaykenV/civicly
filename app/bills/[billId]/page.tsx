@@ -100,6 +100,61 @@ function getLifecycleProgress(status?: string) {
   return (idx + 1) / lifecycleOrder.length;
 }
 
+// Map LoC version codes and human-readable statuses to canonical lifecycle stages
+const versionCodeToStage: Record<string, typeof lifecycleOrder[number]> = {
+  // Introduced
+  ih: "INTRODUCED",
+  is: "INTRODUCED",
+  
+  // Committee / pre-floor processing
+  rh: "IN_COMMITTEE",
+  rs: "IN_COMMITTEE",
+  rch: "IN_COMMITTEE",
+  rcs: "IN_COMMITTEE",
+  pch: "IN_COMMITTEE",
+  pcs: "IN_COMMITTEE",
+  cph: "IN_COMMITTEE",
+  cps: "IN_COMMITTEE",
+  sc: "IN_COMMITTEE",
+  
+  // Passed one chamber
+  eh: "PASSED_HOUSE",
+  eah: "PASSED_HOUSE",
+  es: "PASSED_SENATE",
+  eas: "PASSED_SENATE",
+  
+  // Final stages
+  enr: "PASSED_SENATE", // Enrolled (sent to President) — treat as after Senate for our 5-step bar
+  pl: "ENACTED",
+  pp: "PASSED_SENATE", // Public Print, treat near final
+};
+
+function deriveLifecycleStage(bill?: BillData): typeof lifecycleOrder[number] | undefined {
+  if (!bill) return undefined;
+
+  // If backend already uses canonical enums, prefer them
+  const raw = bill.status;
+  if (lifecycleOrder.includes(raw as typeof lifecycleOrder[number])) {
+    return raw as typeof lifecycleOrder[number];
+  }
+
+  // Try from version code
+  if (bill.latestVersionCode) {
+    const mapped = versionCodeToStage[bill.latestVersionCode.toLowerCase()];
+    if (mapped) return mapped;
+  }
+
+  // Fallback: infer from human-readable status text
+  const s = (bill.status || "").toLowerCase();
+  if (s.includes("introduced")) return "INTRODUCED";
+  if (s.includes("committee") || s.includes("reported") || s.includes("placed on calendar") || s.includes("referred")) return "IN_COMMITTEE";
+  if (s.includes("passed house") || s.includes("agreed to (house)")) return "PASSED_HOUSE";
+  if (s.includes("passed senate") || s.includes("agreed to (senate)")) return "PASSED_SENATE";
+  if (s.includes("public law") || s.includes("enrolled")) return "ENACTED";
+
+  return undefined;
+}
+
 function classNames(...arr: Array<string | false | undefined>) {
   return arr.filter(Boolean).join(" ");
 }
@@ -227,8 +282,9 @@ const BillPage: React.FC<PageProps> = ({ params }) => {
   const bill = billWithSponsor?.bill;
   const sponsor = billWithSponsor?.sponsor;
   const impactAreas = bill?.impactAreas ?? [];
-  const lifecycleProgress = getLifecycleProgress(bill?.status);
-  const statusClass = bill?.status ? statusClassMap[bill.status] ?? "" : "";
+  const derivedStage = deriveLifecycleStage(bill);
+  const lifecycleProgress = getLifecycleProgress(derivedStage);
+  const statusClass = derivedStage ? statusClassMap[derivedStage] ?? "" : "";
 
   // Removed change analysis parsing for now
 

@@ -520,7 +520,9 @@ If citations are unavailable for a section, set "citations": [].`;
 
       // Generate text using the agent
       const { thread } = await billAnalysisAgent.createThread(ctx);
-      const result = await thread.generateText({ prompt });
+      const result = await thread.generateText({ prompt }, {
+        storageOptions: { saveMessages: "none" },
+      });
       
       // Parse the JSON response
       let parsedResult;

@@ -51,212 +51,212 @@ const IMPACT_COLORS: Record<
     borderDark: "border-[color:var(--color-success-border)]/20",
   },
   "Armed Forces": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#2563eb]/12",
+    dark: "bg-[#2563eb]/10",
+    textLight: "text-[#2563eb]",
+    textDark: "text-[#2563eb]",
+    borderLight: "border-[#2563eb]/30",
+    borderDark: "border-[#2563eb]/20",
   },
   "Civil Rights": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#7c3aed]/12",
+    dark: "bg-[#7c3aed]/10",
+    textLight: "text-[#7c3aed]",
+    textDark: "text-[#7c3aed]",
+    borderLight: "border-[#7c3aed]/30",
+    borderDark: "border-[#7c3aed]/20",
   },
   Commerce: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#0d9488]/12",
+    dark: "bg-[#0d9488]/10",
+    textLight: "text-[#0d9488]",
+    textDark: "text-[#0d9488]",
+    borderLight: "border-[#0d9488]/30",
+    borderDark: "border-[#0d9488]/20",
   },
   Crime: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#dc2626]/12",
+    dark: "bg-[#dc2626]/10",
+    textLight: "text-[#dc2626]",
+    textDark: "text-[#dc2626]",
+    borderLight: "border-[#dc2626]/30",
+    borderDark: "border-[#dc2626]/20",
   },
   Economics: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#d97706]/12",
+    dark: "bg-[#d97706]/10",
+    textLight: "text-[#d97706]",
+    textDark: "text-[#d97706]",
+    borderLight: "border-[#d97706]/30",
+    borderDark: "border-[#d97706]/20",
   },
   Education: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#4f46e5]/12",
+    dark: "bg-[#4f46e5]/10",
+    textLight: "text-[#4f46e5]",
+    textDark: "text-[#4f46e5]",
+    borderLight: "border-[#4f46e5]/30",
+    borderDark: "border-[#4f46e5]/20",
   },
   Energy: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#ca8a04]/12",
+    dark: "bg-[#ca8a04]/10",
+    textLight: "text-[#ca8a04]",
+    textDark: "text-[#ca8a04]",
+    borderLight: "border-[#ca8a04]/30",
+    borderDark: "border-[#ca8a04]/20",
   },
   Environment: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#22c55e]/12",
+    dark: "bg-[#22c55e]/10",
+    textLight: "text-[#22c55e]",
+    textDark: "text-[#22c55e]",
+    borderLight: "border-[#22c55e]/30",
+    borderDark: "border-[#22c55e]/20",
   },
   Finance: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#a16207]/12",
+    dark: "bg-[#a16207]/10",
+    textLight: "text-[#a16207]",
+    textDark: "text-[#a16207]",
+    borderLight: "border-[#a16207]/30",
+    borderDark: "border-[#a16207]/20",
   },
   "Government Operations": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#64748b]/12",
+    dark: "bg-[#64748b]/10",
+    textLight: "text-[#64748b]",
+    textDark: "text-[#64748b]",
+    borderLight: "border-[#64748b]/30",
+    borderDark: "border-[#64748b]/20",
   },
   Health: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#e11d48]/12",
+    dark: "bg-[#e11d48]/10",
+    textLight: "text-[#e11d48]",
+    textDark: "text-[#e11d48]",
+    borderLight: "border-[#e11d48]/30",
+    borderDark: "border-[#e11d48]/20",
   },
   Housing: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#06b6d4]/12",
+    dark: "bg-[#06b6d4]/10",
+    textLight: "text-[#06b6d4]",
+    textDark: "text-[#06b6d4]",
+    borderLight: "border-[#06b6d4]/30",
+    borderDark: "border-[#06b6d4]/20",
   },
   Immigration: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#f59e0b]/12",
+    dark: "bg-[#f59e0b]/10",
+    textLight: "text-[#f59e0b]",
+    textDark: "text-[#f59e0b]",
+    borderLight: "border-[#f59e0b]/30",
+    borderDark: "border-[#f59e0b]/20",
   },
   "International Affairs": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#1d4ed8]/12",
+    dark: "bg-[#1d4ed8]/10",
+    textLight: "text-[#1d4ed8]",
+    textDark: "text-[#1d4ed8]",
+    borderLight: "border-[#1d4ed8]/30",
+    borderDark: "border-[#1d4ed8]/20",
   },
   Labor: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#92400e]/12",
+    dark: "bg-[#92400e]/10",
+    textLight: "text-[#92400e]",
+    textDark: "text-[#92400e]",
+    borderLight: "border-[#92400e]/30",
+    borderDark: "border-[#92400e]/20",
   },
   Law: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#6d28d9]/12",
+    dark: "bg-[#6d28d9]/10",
+    textLight: "text-[#6d28d9]",
+    textDark: "text-[#6d28d9]",
+    borderLight: "border-[#6d28d9]/30",
+    borderDark: "border-[#6d28d9]/20",
   },
   "Native Americans": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#9a3412]/12",
+    dark: "bg-[#9a3412]/10",
+    textLight: "text-[#9a3412]",
+    textDark: "text-[#9a3412]",
+    borderLight: "border-[#9a3412]/30",
+    borderDark: "border-[#9a3412]/20",
   },
   "Public Lands": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#15803d]/12",
+    dark: "bg-[#15803d]/10",
+    textLight: "text-[#15803d]",
+    textDark: "text-[#15803d]",
+    borderLight: "border-[#15803d]/30",
+    borderDark: "border-[#15803d]/20",
   },
   Science: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#8b5cf6]/12",
+    dark: "bg-[#8b5cf6]/10",
+    textLight: "text-[#8b5cf6]",
+    textDark: "text-[#8b5cf6]",
+    borderLight: "border-[#8b5cf6]/30",
+    borderDark: "border-[#8b5cf6]/20",
   },
   "Social Issues": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#db2777]/12",
+    dark: "bg-[#db2777]/10",
+    textLight: "text-[#db2777]",
+    textDark: "text-[#db2777]",
+    borderLight: "border-[#db2777]/30",
+    borderDark: "border-[#db2777]/20",
   },
   "Social Security": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#0ea5e9]/12",
+    dark: "bg-[#0ea5e9]/10",
+    textLight: "text-[#0ea5e9]",
+    textDark: "text-[#0ea5e9]",
+    borderLight: "border-[#0ea5e9]/30",
+    borderDark: "border-[#0ea5e9]/20",
   },
   Sports: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#65a30d]/12",
+    dark: "bg-[#65a30d]/10",
+    textLight: "text-[#65a30d]",
+    textDark: "text-[#65a30d]",
+    borderLight: "border-[#65a30d]/30",
+    borderDark: "border-[#65a30d]/20",
   },
   Taxation: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#ea580c]/12",
+    dark: "bg-[#ea580c]/10",
+    textLight: "text-[#ea580c]",
+    textDark: "text-[#ea580c]",
+    borderLight: "border-[#ea580c]/30",
+    borderDark: "border-[#ea580c]/20",
   },
   Technology: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#9333ea]/12",
+    dark: "bg-[#9333ea]/10",
+    textLight: "text-[#9333ea]",
+    textDark: "text-[#9333ea]",
+    borderLight: "border-[#9333ea]/30",
+    borderDark: "border-[#9333ea]/20",
   },
   Transportation: {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#475569]/12",
+    dark: "bg-[#475569]/10",
+    textLight: "text-[#475569]",
+    textDark: "text-[#475569]",
+    borderLight: "border-[#475569]/30",
+    borderDark: "border-[#475569]/20",
   },
   "Water Resources": {
-    light: "bg-[var(--color-card)]",
-    dark: "bg-[var(--color-card)]",
-    textLight: "text-[var(--color-muted-dark)]",
-    textDark: "text-[var(--color-muted)]",
-    borderLight: "border-[var(--color-border)]",
-    borderDark: "border-[var(--color-border)]",
+    light: "bg-[#0891b2]/12",
+    dark: "bg-[#0891b2]/10",
+    textLight: "text-[#0891b2]",
+    textDark: "text-[#0891b2]",
+    borderLight: "border-[#0891b2]/30",
+    borderDark: "border-[#0891b2]/20",
   },
 };
 
@@ -267,6 +267,7 @@ export default function Homepage() {
     <main className="min-h-screen overflow-x-hidden" style={{ background: "linear-gradient(180deg, var(--color-background), var(--color-background-end) 30%)" }}>
       <Header />
       <HeroSection />
+      <TrendingBillsSection />
       <LatestBillsSection />
       <Footer />
     </main>
@@ -768,6 +769,134 @@ function HeroSearch() {
   );
 }
 
+/* ---------- Trending Bills ---------- */
+
+function TrendingBillsSection() {
+  const bills = useQuery(api.homepage.getTrendingBills);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    if (!container || !bills || bills.length === 0) return;
+
+    const scrollLeft = container.scrollLeft;
+    const totalWidth = container.scrollWidth - container.clientWidth;
+    if (totalWidth <= 0) return;
+
+    const cardWidthEstimate = container.scrollWidth / bills.length;
+    const centerScrollPosition = scrollLeft + container.clientWidth / 2;
+    let newIndex = Math.floor(centerScrollPosition / cardWidthEstimate);
+    newIndex = Math.max(0, Math.min(bills.length - 1, newIndex));
+
+    if (newIndex !== selectedIndex) {
+      setSelectedIndex(newIndex);
+    }
+  };
+
+  return (
+    <section className="relative py-6 md:py-8 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-[50rem] rounded-full blur-3xl bg-[var(--color-accent)]/12" />
+      </div>
+      <div className="max-w-7xl mx-auto">
+        <div className="text-left mb-4 md:mb-6">
+          <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight text-[var(--color-foreground-dark)]">
+            Trending Bills
+          </h2>
+          <p className="mt-2 text-[var(--color-muted)]">Handpicked bills gaining attention right now.</p>
+        </div>
+
+        {bills === undefined ? (
+          <>
+            {/* Mobile Loading Skeleton */}
+            <div className="md:hidden flex overflow-x-auto space-x-4 pb-2 -mx-4 px-4 scrollbar-hide">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="min-w-[280px] w-[85vw] max-w-[340px] flex-shrink-0">
+                  <div
+                    className={cn(
+                      "rounded-2xl p-6 h-full",
+                      "bg-[var(--color-card)] border border-[var(--color-border)]",
+                      "animate-pulse"
+                    )}
+                  >
+                    <div className="h-3 bg-[var(--color-border-light)] rounded w-1/3 mb-3" />
+                    <div className="h-5 bg-[var(--color-border-light)] rounded w-3/4 mb-3" />
+                    <div className="h-4 bg-[var(--color-border-light)] rounded w-full mb-2" />
+                    <div className="h-4 bg-[var(--color-border-light)] rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Loading Skeleton */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "rounded-2xl p-6",
+                    "bg-[var(--color-card)] border border-[var(--color-border)]",
+                    "animate-pulse"
+                  )}
+                >
+                  <div className="h-3 bg-[var(--color-border-light)] rounded w-1/3 mb-3" />
+                  <div className="h-5 bg-[var(--color-border-light)] rounded w-3/4 mb-3" />
+                  <div className="h-4 bg-[var(--color-border-light)] rounded w-full mb-2" />
+                  <div className="h-4 bg-[var(--color-border-light)] rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          </>
+        ) : bills.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-[var(--color-muted)]">No trending bills to show.</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile: Horizontal Scrollable */}
+            <div
+              ref={scrollContainerRef}
+              className="md:hidden flex overflow-x-auto space-x-4 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide"
+              onScroll={handleScroll}
+            >
+              {bills.map((bill) => (
+                <div key={bill._id} className="min-w-[280px] w-[85vw] max-w-[340px] snap-center flex-shrink-0">
+                  <BillCard bill={bill as Bill} />
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile Scroll Indicators */}
+            {bills.length > 1 && (
+              <div className="md:hidden flex justify-center mt-6">
+                <div className="flex space-x-2">
+                  {bills.map((_, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "transition-all duration-300 rounded-full",
+                        selectedIndex === index ? "w-8 h-2 bg-[var(--color-primary)]" : "w-2 h-2 bg-[var(--color-primary)]/40"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Desktop: Grid layout */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+              {bills.map((bill) => (
+                <BillCard key={bill._id} bill={bill as Bill} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ---------- Latest Bills ---------- */
 
 function LatestBillsSection() {
@@ -795,10 +924,6 @@ function LatestBillsSection() {
 
   return (
     <section id="bills" className="relative py-4 md:py-6 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-[50rem] rounded-full blur-3xl bg-[var(--color-accent)]/12" />
-      </div>
-
       <div className="max-w-7xl mx-auto">
         <div className="text-left mb-8 md:mb-10">
           <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight text-[var(--color-foreground-dark)]">
@@ -906,7 +1031,7 @@ function StatusBadge({ status }: { status: string }) {
   let colorClass = "status-committee"; // Default to warning/committee status
   let icon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />;
 
-  if (s.includes("passed") || s.includes("enacted")) {
+  if (s.includes("passed") || s.includes("enacted") || s.includes("law")) {
     colorClass = "status-passed";
     icon = <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />;
   } else if (s.includes("failed") || s.includes("rejected")) {

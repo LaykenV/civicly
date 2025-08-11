@@ -46,6 +46,7 @@ convex deploy?
 backload data - last 1000 bills?
 
 trending bills
+enrolled status
 
 MVP LAUNCH
 
