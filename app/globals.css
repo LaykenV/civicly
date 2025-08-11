@@ -335,7 +335,7 @@ body {
   background-color: var(--color-hover-bg);
 }
 
-.icon-button:focus {
+.icon-button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px hsla(233, 85%, 60%, 0.6);
 }
@@ -554,3 +554,43 @@ body {
 /* Shimmer overlay is placed as a child span; no extra rules needed here */
 
 /* Subtle separator line within light cards remains consistent */
+
+/* From Uiverse.io by JulanDeAlb - adapted to theme */
+.hamburger {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hamburger input {
+  display: none;
+}
+
+.hamburger svg {
+  height: 2.25rem; /* ~36px to match header scale */
+  transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-foreground);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+  transition: stroke-dasharray 600ms cubic-bezier(0.4, 0, 0.2, 1),
+              stroke-dashoffset 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.line-top-bottom {
+  stroke-dasharray: 12 63;
+}
+
+.hamburger input:checked + svg {
+  transform: rotate(-45deg);
+}
+
+.hamburger input:checked + svg .line-top-bottom {
+  stroke-dasharray: 20 300;
+  stroke-dashoffset: -32.42;
+}

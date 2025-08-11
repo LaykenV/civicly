@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/cn";
+import { Moon, SunDim } from "lucide-react";
 import { useTheme } from "next-themes";
 
 function NavLink({ href, label }: { href: string; label: string }) {
@@ -56,7 +57,7 @@ function UserMenu({
 
         <div className="space-y-1">
           <Link
-            href="/settings"
+            href="/coming-soon"
             onClick={onClose}
             className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors"
           >
@@ -82,33 +83,29 @@ function UserMenu({
   );
 }
 
-function ThemeToggle() {
-  const { theme, setTheme, systemTheme, resolvedTheme } = useTheme();
+// Simple theme toggler using next-themes for persistence
+function ThemeToggle({ className }: { className?: string }) {
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
-  const current = resolvedTheme || theme || systemTheme || "dark";
-  const isDark = current === "dark";
+
+  const toggle = () => {
+    const isDark = (resolvedTheme ?? "dark") === "dark";
+    setTheme(isDark ? "light" : "dark");
+  };
+
+  if (!mounted) {
+    return (
+      <button aria-label="Toggle theme" title="Toggle theme" className={cn("icon-button", className)}>
+        <SunDim className="w-5 h-5" />
+      </button>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label="Toggle theme"
-      title="Toggle theme"
-      className="icon-button"
-    >
-      {isDark ? (
-        // Sun icon for light mode target
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M7.05 7.05L5.636 5.636m12.728 0l-1.414 1.414M7.05 16.95l-1.414 1.414" />
-          <circle cx="12" cy="12" r="4" strokeWidth={2} />
-        </svg>
-      ) : (
-        // Moon icon for dark mode target
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 118.646 3.646 7 7 0 0020.354 15.354z" />
-        </svg>
-      )}
+    <button onClick={toggle} aria-label="Toggle theme" title="Toggle theme" className={cn("icon-button", className)}>
+      {resolvedTheme === "dark" ? <SunDim className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
     </button>
   );
 }
@@ -120,6 +117,8 @@ export default function Header() {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
@@ -130,13 +129,17 @@ export default function Header() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showUserMenu && !(event.target as Element).closest(".user-menu-container")) {
+      const target = event.target as Element;
+      if (showUserMenu && !target.closest(".user-menu-container")) {
         setShowUserMenu(false);
+      }
+      if (showMobileMenu && mobileMenuRef.current && !mobileMenuRef.current.contains(target) && !target.closest("label.hamburger") && !target.closest(".mobile-trigger")) {
+        setShowMobileMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showUserMenu]);
+  }, [showUserMenu, showMobileMenu]);
 
   return (
     <header
@@ -149,7 +152,7 @@ export default function Header() {
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-16 relative">
           <div className="flex items-center gap-8">
             <Link
               href="/"
@@ -171,7 +174,8 @@ export default function Header() {
             </nav>
           </div>
 
-          <div className="flex items-center space-x-2">
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center space-x-2">
             <ThemeToggle />
             {isAuthenticated ? (
               <div className="relative user-menu-container">
@@ -203,16 +207,128 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <>
-                <button onClick={() => router.push("/auth?flow=signIn")} className="btn-secondary">
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => router.push("/auth?flow=signIn")} className="group btn-oauth w-full">
+                  <span className="pointer-events-none absolute left-[-150%] top-0 h-full w-[200%] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)] dark:bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.18),transparent)] transition-all duration-700 ease-out group-hover:left-[150%]" />
                   Sign In
                 </button>
-                <button onClick={() => router.push("/auth?flow=signUp")} className="btn-primary">
+                <button onClick={() => router.push("/auth?flow=signUp")} className="btn-primary w-full">
                   Get Started
                 </button>
-              </>
+              </div>
             )}
           </div>
+
+          {/* Mobile actions */}
+          <div className="flex md:hidden items-center gap-2">
+            {isAuthenticated ? (
+              <button
+                className="mobile-trigger flex items-center gap-3 px-2 py-1 rounded-lg"
+                onClick={() => setShowMobileMenu((s) => !s)}
+              >
+                <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))] flex items-center justify-center text-white font-semibold">
+                  {user?.image ? (
+                    <img src={user.image} alt={user?.name || "User"} className="w-full h-full rounded-md object-cover" />
+                  ) : (
+                    <span className="text-xs">{user?.name?.[0]?.toUpperCase() || "U"}</span>
+                  )}
+                </div>
+              </button>
+            ) : null}
+
+            {/* Hamburger toggle */}
+            <label className="hamburger" aria-label="Open menu">
+              <input
+                type="checkbox"
+                checked={showMobileMenu}
+                onChange={() => setShowMobileMenu((s) => !s)}
+                aria-checked={showMobileMenu}
+                aria-controls="mobile-menu"
+              />
+              <svg viewBox="0 0 32 32" aria-hidden width="32" height="32">
+                <path className="line line-top-bottom" d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"></path>
+                <path className="line" d="M7 16 27 16"></path>
+              </svg>
+            </label>
+          </div>
+
+          {/* Mobile menu drawer */}
+          {showMobileMenu && (
+            <div id="mobile-menu" ref={mobileMenuRef} className="md:hidden absolute right-4 top-[calc(100%+8px)] z-50 w-[min(92vw,20rem)] mobile-menu-container">
+              <div className="relative rounded-2xl p-4 bg-[var(--color-card-solid)] border border-[var(--color-border)] shadow-[0_28px_64px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl space-y-3">
+                <div className="absolute right-3 top-3">
+                  <ThemeToggle />
+                </div>
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center gap-3 pb-3 border-b border-[var(--color-border)]">
+                      <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,var(--color-primary),var(--color-accent))] flex items-center justify-center text-white font-semibold">
+                        {user?.image ? (
+                          <img src={user.image} alt={user?.name || "User"} className="w-full h-full rounded-md object-cover" />
+                        ) : (
+                          <span className="text-sm">{user?.name?.[0]?.toUpperCase() || "U"}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-foreground)] truncate">{user?.name || "User"}</p>
+                        <p className="text-xs text-[var(--color-muted)]/90 truncate">{user?.email || ""}</p>
+                      </div>
+                    </div>
+                    {/* Nav links for mobile */}
+                    <Link href="/coming-soon" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      About
+                    </Link>
+                    <Link href="/coming-soon" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      Politicians
+                    </Link>
+                    <Link href="/coming-soon" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      All Bills
+                    </Link>
+                    <div className="my-1 border-t border-[var(--color-border)]" />
+                    <Link href="/coming-soon" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      </svg>
+                      <span>Settings</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setShowMobileMenu(false);
+                        void signOut().then(() => router.push("/auth"));
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span>Sign Out</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Nav links for mobile */}
+                    <Link href="/coming-soon" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      About
+                    </Link>
+                    <Link href="/coming-soon" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      Politicians
+                    </Link>
+                    <Link href="/coming-soon" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover-bg)] rounded-lg transition-colors">
+                      All Bills
+                    </Link>
+                    <div className="my-1 border-t border-[var(--color-border)]" />
+                    <button onClick={() => { setShowMobileMenu(false); router.push("/auth?flow=signIn"); }} className="group btn-oauth w-full">
+                      <span className="pointer-events-none absolute left-[-150%] top-0 h-full w-[200%] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)] dark:bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.18),transparent)] transition-all duration-700 ease-out group-hover:left-[150%]" />
+                      Sign In
+                    </button>
+                    <button onClick={() => { setShowMobileMenu(false); router.push("/auth?flow=signUp"); }} className="btn-primary w-full">
+                      Get Started
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

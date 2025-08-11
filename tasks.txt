@@ -7,7 +7,7 @@ homepage:
 //typewriter
 //sticky header
 //log warnings
-font
+//font
 //typewriter text
 
 
@@ -30,6 +30,16 @@ debounce search and highlight
 //sign in page ui
 
 //coming soon page
+
+ui update
+custom components 21st dev ?
+logo
+
+deploy
+
+prompt with page and data and get ideas
+finalize idea, list of components Needed
+browse nice components
 
 backload data - last 1000 bills?
 MVP LAUNCH

@@ -83,6 +83,25 @@ export const getBillInfo = internalQuery({
   },
 });
 
+// New helper to resolve Convex bill _id from identifier fields
+export const getBillIdByIdentifier = internalQuery({
+  args: {
+    congress: v.number(),
+    billType: v.string(),
+    billNumber: v.string(),
+  },
+  returns: v.union(v.id("bills"), v.null()),
+  handler: async (ctx, { congress, billType, billNumber }) => {
+    const bill = await ctx.db
+      .query("bills")
+      .withIndex("by_identifier", (q) =>
+        q.eq("congress", congress).eq("billType", billType).eq("billNumber", billNumber)
+      )
+      .first();
+    return bill?._id ?? null;
+  },
+});
+
 // Example search function that takes advantage of chunked data
 export const searchBills = action({
   args: {
@@ -139,7 +158,7 @@ export const searchBills = action({
       
       // Try to extract name, party, and state from sponsor text
       // Format is usually "Rep. Name (Party-State)" or similar
-      const match = sponsorText.match(/(?:Rep\.|Sen\.)?\s*([^(]+)\s*\(([^-]+)-([^)]+)\)/);
+      const match = sponsorText.match(/(?:Rep\.|Sen\.)?\s*([^\(]+)\s*\(([^-]+)-([^\)]+)\)/);
       if (match) {
         return {
           name: match[1].trim(),
@@ -170,54 +189,70 @@ export const searchBills = action({
       const entry = entries.find(e => e.entryId === result.entryId);
       if (!entry || !entry.metadata) return;
       
-      const billId = entry.metadata.billIdentifier as string;
+      const billIdentifier = entry.metadata.billIdentifier as string;
       const content = result.content.map(c => c.text).join('\n');
       const relevantText = content.slice(0, 500) + (content.length > 500 ? '...' : '');
 
-      if (!billGroups.has(billId)) {
-        billGroups.set(billId, {
+      if (!billGroups.has(billIdentifier)) {
+        billGroups.set(billIdentifier, {
           entry,
           chunks: []
         });
       }
       
-      billGroups.get(billId)!.chunks.push({
+      billGroups.get(billIdentifier)!.chunks.push({
         score: result.score,
         content,
         relevantText
       });
     });
 
-    // Convert grouped results to final format using metadata
-    const processedResults = Array.from(billGroups.entries()).map(([billId, group]) => {
-      // Find the chunk with the highest score
-      const bestChunk = group.chunks.reduce((best, current) => 
-        current.score > best.score ? current : best
-      );
-      
-      // Extract data directly from entry metadata
-      const metadata = group.entry.metadata!;
-      
-      return {
-        billId,
-        congress: parseInt((metadata.congress as string) || '0'),
-        billType: (metadata.billType as string) || 'Unknown',
-        billNumber: (metadata.billNumber as string) || 'Unknown',
-        title: (metadata.cleanedShortTitle as string) || (metadata.officialTitle as string) || 'Unknown Title',
-        tagline: (metadata.tagLine as string) || undefined,
-        sponsor: parseSponsor(metadata.sponsorName as string),
-        impactAreas: parseImpactAreas(metadata.impactAreas as string),
-        relevanceScore: bestChunk.score,
-        relevantChunks: group.chunks.length,
-        bestMatchText: bestChunk.relevantText,
-      };
-    });
+    // Convert grouped results to final format using metadata and resolve Convex bill _id
+    const processedResults = await Promise.all(
+      Array.from(billGroups.values()).map(async (group) => {
+        // Find the chunk with the highest score
+        const bestChunk = group.chunks.reduce((best, current) => 
+          current.score > best.score ? current : best
+        );
+        
+        // Extract data directly from entry metadata
+        const metadata = group.entry.metadata!;
+        const congress = parseInt((metadata.congress as string) || '0');
+        const billType = (metadata.billType as string) || 'Unknown';
+        const billNumber = (metadata.billNumber as string) || 'Unknown';
+
+        // Resolve Convex bill _id
+        const convexBillId = await ctx.runQuery(internal.agent.getBillIdByIdentifier, {
+          congress,
+          billType,
+          billNumber,
+        });
+        if (!convexBillId) {
+          return null; // Skip results we can't route to
+        }
+        
+        return {
+          billId: convexBillId as string,
+          congress,
+          billType,
+          billNumber,
+          title: (metadata.cleanedShortTitle as string) || (metadata.officialTitle as string) || 'Unknown Title',
+          tagline: (metadata.tagLine as string) || undefined,
+          sponsor: parseSponsor(metadata.sponsorName as string),
+          impactAreas: parseImpactAreas(metadata.impactAreas as string),
+          relevanceScore: bestChunk.score,
+          relevantChunks: group.chunks.length,
+          bestMatchText: bestChunk.relevantText,
+        };
+      })
+    );
 
     // Sort by relevance score (highest first)
-    processedResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    const filteredResults = processedResults.filter((r): r is NonNullable<typeof r> => r !== null);
+    filteredResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     // Take only the requested number of bills (not chunks)
-    const limitedResults = processedResults.slice(0, args.limit || 10);
+    const limitedResults = filteredResults.slice(0, args.limit || 10);
 
     // Generate a summary of the search results
     const totalChunks = results.length;
@@ -318,7 +353,7 @@ export const chatAboutBill = action({
     let threadInfo: { chatId: string; threadId: string; } | null = await ctx.runQuery(internal.agent.getChatThread, {
       userId: userId,
       billId: args.billId,
-    });
+      });
     
     if (!threadInfo) {
       threadInfo = await ctx.runMutation(internal.agent.createChatThread, {

@@ -8,6 +8,7 @@ import { Id } from "../convex/_generated/dataModel";
 import { BillSearchResult, BillSearchResponse } from "../types";
 import Header from "@/components/Header";
 import { cn } from "@/lib/cn";
+import { useRouter } from "next/navigation";
 
 interface Bill {
   _id: Id<"bills">;
@@ -373,11 +374,24 @@ function HeroSection() {
 
 /* ---------- Search Result Card ---------- */
 
-function SearchResultCard({ result, onClick }: { result: BillSearchResult; onClick: () => void }) {
+function SearchResultCard({ result, onClick, isActive, onMouseEnter, id, disableHover }: { result: BillSearchResult; onClick: () => void; isActive?: boolean; onMouseEnter?: () => void; id?: string; disableHover?: boolean }) {
   return (
     <button
+      id={id}
+      role="option"
+      aria-selected={!!isActive}
+      onMouseEnter={onMouseEnter}
+      onFocus={onMouseEnter}
       onClick={onClick}
-      className="w-full text-left p-4 rounded-xl transition-colors border border-[var(--color-border)] hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-card)] bg-[var(--color-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60"
+      className={cn(
+        "w-full text-left p-4 rounded-xl transition-colors border",
+        !disableHover &&
+          "hover:bg-[var(--color-primary)]/10 hover:border-[var(--color-primary)]/60 hover:ring-2 hover:ring-[var(--color-primary)]/30",
+        "bg-[var(--color-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/60",
+        isActive
+          ? "bg-[var(--color-primary)]/10 border-[var(--color-primary)]/60 ring-2 ring-[var(--color-primary)]/30"
+          : "border-[var(--color-border)]"
+      )}
     >
       <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex-1 min-w-0">
@@ -440,9 +454,12 @@ function HeroSearch() {
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
+  const [isKeyboardNavigating, setIsKeyboardNavigating] = useState<boolean>(false);
 
   const searchBills = useAction(api.agent.searchBills);
   const debouncedValue = useDebounce(value, 300);
+  const router = useRouter();
 
   const placeholders = useMemo(
     () => [
@@ -461,6 +478,9 @@ function HeroSearch() {
   );
 
   const [searchResults, setSearchResults] = useState<BillSearchResponse | null>(null);
+  const options = searchResults?.results ?? [];
+  const listboxId = "hero-search-results";
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   // Typewriter effect for placeholder
   useEffect(() => {
@@ -543,19 +563,67 @@ function HeroSearch() {
     }
   }, [debouncedValue, searchBills]);
 
+  // Reset/seed active index when dropdown changes
+  useEffect(() => {
+    if (showDropdown && options.length > 0) {
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(-1);
+    }
+  }, [showDropdown, searchResults]);
+
+  // Keep the active option scrolled into view when navigating with arrows
+  useEffect(() => {
+    if (!showDropdown) return;
+    const optionId = getOptionId(activeIndex);
+    if (!optionId) return;
+    const container = listRef.current;
+    const el = document.getElementById(optionId) as HTMLElement | null;
+    if (!container || !el) return;
+    const elTop = el.offsetTop;
+    const elBottom = elTop + el.offsetHeight;
+    const viewTop = container.scrollTop;
+    const viewBottom = viewTop + container.clientHeight;
+    if (elTop < viewTop) {
+      container.scrollTop = elTop - 8;
+    } else if (elBottom > viewBottom) {
+      container.scrollTop = elBottom - container.clientHeight + 8;
+    }
+  }, [activeIndex, showDropdown]);
+
   const handleResultClick = (result: BillSearchResult) => {
+    router.push(`/bills/${result.billId}`);
     console.log(result);
-    // TODO: Navigate to bill details page using result.billId
     setShowDropdown(false);
     setValue("");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
-    if (!e.target.value.trim()) {
+  };
+
+  const getOptionId = (i: number) => (i >= 0 && i < options.length ? `hero-search-option-${options[i].billId}` : undefined);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (options.length === 0) return;
+      setIsKeyboardNavigating(true);
+      setActiveIndex((prev) => (prev + 1) % options.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (options.length === 0) return;
+      setIsKeyboardNavigating(true);
+      setActiveIndex((prev) => (prev - 1 + options.length) % options.length);
+    } else if (e.key === "Enter") {
+      if (options.length === 0) return;
+      e.preventDefault();
+      const indexToOpen = activeIndex >= 0 && activeIndex < options.length ? activeIndex : 0;
+      handleResultClick(options[indexToOpen]!);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
       setShowDropdown(false);
-      setSearchResults(null);
-      // resume typewriter from current index
     }
   };
 
@@ -576,10 +644,10 @@ function HeroSearch() {
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             {isSearching ? (
-              <div className="animate-spin h-5 w-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full" />
+              <div className="animate-spin h-5 w-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full transition-opacity" />
             ) : (
               <svg
-                className="h-5 w-5 text-[var(--color-muted-lighter)]"
+                className="h-5 w-5 text-[var(--color-muted-lighter)] transition-transform"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -595,6 +663,7 @@ function HeroSearch() {
             type="text"
             value={value}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             className={cn(
               "w-full rounded-xl border-2 border-transparent bg-transparent",
               "pl-12 pr-28 py-3.5 md:py-4 text-base md:text-lg",
@@ -605,6 +674,11 @@ function HeroSearch() {
             )}
             placeholder={typedPlaceholder}
             autoComplete="off"
+            role="combobox"
+            aria-expanded={showDropdown}
+            aria-controls={listboxId}
+            aria-activedescendant={activeIndex >= 0 ? getOptionId(activeIndex) : undefined}
+            aria-autocomplete="list"
           />
 
           {value && (
@@ -652,17 +726,41 @@ function HeroSearch() {
               </div>
             )}
 
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-              {!isSearching && (!searchResults || searchResults.results.length === 0) && (
+            <div
+              id={listboxId}
+              role="listbox"
+              aria-label="Search results"
+              ref={listRef}
+              className="space-y-3 max-h-[60vh] overflow-y-auto pr-1"
+              onMouseMove={() => setIsKeyboardNavigating(false)}
+            >
+              {!isSearching && (!searchResults || options.length === 0) && (
                 <div className="p-8 text-center text-sm text-[var(--color-muted)]">
                   No results yet. Try “farm bill subsidies” or “student loan forgiveness”.
                 </div>
               )}
 
-              {searchResults?.results.map((result) => (
-                <SearchResultCard key={result.billId} result={result} onClick={() => handleResultClick(result)} />
+              {options.map((result, index) => (
+                <SearchResultCard
+                  key={result.billId}
+                  id={getOptionId(index)}
+                  result={result}
+                  isActive={index === activeIndex}
+                  onMouseEnter={isKeyboardNavigating ? undefined : () => setActiveIndex(index)}
+                  disableHover={isKeyboardNavigating}
+                  onClick={() => handleResultClick(result)}
+                />
               ))}
             </div>
+
+            {options.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+                <div className="flex items-center justify-between text-[10px] text-[var(--color-muted)]">
+                  <span>↑/↓ to navigate • Enter to open</span>
+                  <span>Esc to close</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
