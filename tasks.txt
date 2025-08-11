@@ -43,10 +43,10 @@ bills page:
 deploy 
 convex deploy?
 
-backload data - last 1000 bills?
+//backload data - last 1000 bills?
 
-trending bills
-enrolled status
+//trending bills
+//enrolled status
 
 MVP LAUNCH
 

@@ -8,7 +8,7 @@ crons.interval(
   "data pipeline workflow",
   { hours: 4 },
   internal.workflows.runDataPipelineCron,
-  { maxFiles: 500, interBatchDelayMs: 1500 },
+  { maxFiles: 20, interBatchDelayMs: 1500 },
 );
 
 export default crons;
