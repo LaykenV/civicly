@@ -107,13 +107,10 @@
   --color-error-border: hsla(351, 83%, 65%, 0.2); /* Light rose border */
 }
 
-/* Ensure the UA paints the whole viewport, including under the notch/status bar */
-html {
-  background-color: var(--color-background);
-}
-
-.dark html {
-  background-color: var(--color-background);
+@layer base {
+  body {
+    background-color: var(--color-background);
+  }
 }
 
 /* Theme tokens for Tailwind */
