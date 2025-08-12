@@ -15,8 +15,8 @@
   --color-accent: hsl(43, 74%, 52%);             /* Gold - CTA & Pro Features */
   
   /* Light Mode Colors */
-  --color-background: hsl(225, 40%, 95%);        /* Softer, tinted background start */
-  --color-background-end: hsl(225, 36%, 92%);   /* Softer, tinted background end */
+  --color-background: hsl(225, 40%, 95%);        /* Solid background for status bar */
+  --color-background-end: hsl(225, 36%, 92%);   /* For gradient utility */
   --color-card: rgba(255, 255, 255, 0.86);      /* Less bright translucent card */
   --color-card-solid: hsl(225, 33%, 96%);       /* Subtly tinted solid card */
   
@@ -72,8 +72,8 @@
 
 .dark {
   /* Dark Mode Colors */
-  --color-background: hsl(220, 30%, 12%);      /* Dark background start */
-  --color-background-end: hsl(220, 26%, 9%);  /* Dark background end */
+  --color-background: hsl(220, 30%, 12%);      /* Solid dark background for status bar */
+  --color-background-end: hsl(220, 26%, 9%);  /* For gradient utility */
   --color-card: rgba(255, 255, 255, 0.06);    /* Dark card backgrounds */
   --color-card-solid: hsl(220, 28%, 12%);     /* Solid dark card background */
   
@@ -166,32 +166,22 @@
 
 html {
   scroll-behavior: smooth;
-  /* Solid base color so the OS status bar/notch area matches */
-  background-color: white;
-  color-scheme: light;
-}
-
-html.dark {
-  background-color: black;
-  color-scheme: dark;
 }
 
 body {
   font-family: var(--font-body);
   color: var(--color-foreground);
-  background: linear-gradient(180deg, var(--color-background), var(--color-background-end) 30%);
+  /* Use solid background color that matches theme-color meta tags */
+  background: var(--color-background);
   min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Safe area utility if needed in components */
-.safe-area-insets {
-  padding-top: env(safe-area-inset-top);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
+/* Optional gradient background utility class for specific components */
+.bg-gradient {
+  background: linear-gradient(180deg, var(--color-background), var(--color-background-end) 30%);
 }
 
 /* Typography Classes */

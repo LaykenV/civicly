@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { Viewport } from "next";
 import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
@@ -56,20 +55,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-  },
-};
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
 };
 
 export default function RootLayout({
@@ -83,9 +68,12 @@ export default function RootLayout({
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+          <meta name="theme-color" content="hsl(225, 40%, 95%)" media="(prefers-color-scheme: light)" />
+          <meta name="theme-color" content="hsl(220, 30%, 12%)" media="(prefers-color-scheme: dark)" />
         </head>
         <body className="font-body antialiased min-h-screen">
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
             <ConvexClientProvider>
               <div id="root" className="relative">
                 {children}
