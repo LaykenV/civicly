@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
@@ -55,6 +55,17 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  // Ensure browser UI (status/address bar) matches theme on mobile
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "hsl(225, 40%, 95%)" },
+    { media: "(prefers-color-scheme: dark)", color: "hsl(220, 30%, 12%)" },
+  ],
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -66,11 +77,10 @@ export default function RootLayout({
     <ConvexAuthNextjsServerProvider>
       <html lang="en" className="scroll-smooth" suppressHydrationWarning>
         <head>
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-          <meta name="theme-color" content="hsl(225, 40%, 95%)" media="(prefers-color-scheme: light)" />
-          <meta name="theme-color" content="hsl(220, 30%, 12%)" media="(prefers-color-scheme: dark)" />
         </head>
         <body className="font-body antialiased min-h-screen">
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
