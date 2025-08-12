@@ -171,7 +171,13 @@
 }
 
 html {
+  background-color: var(--color-background);
+  color-scheme: light;
   scroll-behavior: smooth;
+}
+
+.dark html {
+  color-scheme: dark;
 }
 
 body {
