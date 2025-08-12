@@ -171,19 +171,15 @@
 }
 
 html {
-  background-color: var(--color-background);
-  color-scheme: light;
   scroll-behavior: smooth;
-}
-
-.dark html {
-  color-scheme: dark;
+  background-color: var(--color-background);
 }
 
 body {
   font-family: var(--font-body);
   color: var(--color-foreground);
   background: linear-gradient(180deg, var(--color-background), var(--color-background-end) 30%);
+  background-color: var(--color-background);
   min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

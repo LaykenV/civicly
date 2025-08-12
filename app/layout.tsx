@@ -3,6 +3,7 @@ import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ThemeProvider } from "next-themes";
+import ThemeColorMeta from "@/components/ThemeColorMeta";
 
 export const metadata: Metadata = {
   title: "Civicly - Making Complex Legislation Accessible",
@@ -55,10 +56,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
 };
 
 export default function RootLayout({
@@ -75,6 +72,7 @@ export default function RootLayout({
         </head>
         <body className="font-body antialiased min-h-screen">
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <ThemeColorMeta />
             <ConvexClientProvider>
               <div id="root" className="relative">
                 {children}
