@@ -1,4 +1,4 @@
-/*import { cronJobs } from "convex/server";
+import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
@@ -6,9 +6,9 @@ const crons = cronJobs();
 // Run durable data pipeline workflow every 4 hours
 crons.interval(
   "data pipeline workflow",
-  { hours: 4 },
+  { hours: 24 },
   internal.workflows.runDataPipelineCron,
-  { maxFiles: 20, interBatchDelayMs: 1500 },
+  { maxFiles: 1, interBatchDelayMs: 1500 },
 );
 
-export default crons;*/
+export default crons;
