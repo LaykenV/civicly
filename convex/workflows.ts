@@ -36,6 +36,11 @@ export const listNewXmlFiles = internalAction({
       const data: BillData = await response.json();
       const newXmlFiles = (data.files ?? [])
         .filter((f) => f.link.endsWith(".xml"))
+        // Exclude initial-state bills: 'ih' (House Introduced) and 'is' (Senate Introduced)
+        .filter((f) => {
+          const link = f.link.toLowerCase();
+          return !link.endsWith("ih.xml") && !link.endsWith("is.xml");
+        })
         .filter((f) => new Date(f.formattedLastModifiedTime).getTime() > args.sinceMs)
         .sort((a, b) => new Date(b.formattedLastModifiedTime).getTime() - new Date(a.formattedLastModifiedTime).getTime())
         .map((f) => f.link as string);
@@ -43,6 +48,7 @@ export const listNewXmlFiles = internalAction({
     }
 
     // Deduplicate
+    console.log(`Found ${urls.length} new XML files`);
     return Array.from(new Set(urls));
   },
 });

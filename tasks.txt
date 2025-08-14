@@ -40,8 +40,8 @@ bills page:
 
 //logo
 
-deploy 
-convex deploy?
+//deploy 
+//convex deploy?
 
 //backload data - last 1000 bills?
 
@@ -50,9 +50,20 @@ convex deploy?
 
 MVP LAUNCH
 
+only pull bills that > ih?
+backload all in prod
+fix crons to run only in prod
+leave any bills not ih in dev
+
+politician data
+
+link politician data and votes to bills
+
+RELEASE
+
 add dock with x, input in center, share on right
 when input is sent, open side drawer for chat interface
 
 chat with full text? need agent for long bills. ask agent with summary, then ask for vector searches, then use those as context again.
 
-politicians
+RELEASE
